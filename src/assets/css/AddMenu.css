@@ -1,0 +1,116 @@
+.add-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    /* Overlay leve para focar no modal */
+    padding: 20px;
+    z-index: 2000;
+}
+
+.add-card {
+    background-color: var(--hf-bg-modal);
+    width: 90%;
+    max-width: 360px;
+    border-radius: var(--hf-radius-md);
+    border: 1px solid #eee;
+    overflow: hidden;
+    box-shadow: var(--hf-shadow-md);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.add-header {
+    background: var(--hf-primary);
+    height: 56px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--hf-text-main);
+    position: relative;
+}
+
+.add-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: var(--hf-bg-modal);
+    align-items: center;
+}
+
+.btn-menu-add {
+    height: 56px;
+    width: 100%;
+    max-width: 280px;
+    border-radius: var(--hf-radius-lg);
+    border: none;
+    font-weight: 700;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: var(--hf-shadow-btn);
+    transition: all 0.2s;
+}
+
+.btn-yellow-add {
+    background-color: var(--hf-secondary);
+    color: var(--hf-text-main);
+}
+
+.btn-orange-add {
+    background-color: var(--hf-secondary);
+    color: var(--hf-text-main);
+}
+
+.btn-menu-add:hover {
+    background-color: var(--hf-primary-hover);
+    transform: scale(1.02);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.close-x {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    /* Quadrado arredondado conforme imagem */
+    background: var(--hf-white);
+    border: none;
+    font-size: 16px;
+    color: var(--hf-text-main);
+    cursor: pointer;
+    box-shadow: var(--hf-shadow-sm);
+}
+
+@media (max-width: 600px) {
+    .add-header {
+        height: 50px;
+        font-size: 16px;
+    }
+
+    .btn-menu-add {
+        height: 50px;
+        font-size: 16px;
+    }
+}

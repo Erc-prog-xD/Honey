@@ -1,0 +1,205 @@
+.sidebar-container {
+    background-color: var(--hf-white);
+    height: 100%;
+    overflow-y: auto;
+    padding: 10px;
+    border-right: 1px solid #eee;
+}
+
+/* Desktop: sidebar sempre visível */
+.sidebar-desktop {
+    display: block;
+}
+
+/* Mobile: sidebar oculto por padrão */
+.sidebar-mobile {
+    display: none;
+}
+
+/* FAB oculto no desktop */
+.sidebar-fab {
+    display: none;
+}
+
+/* Botão toggle antigo oculto */
+.sidebar-mobile-toggle {
+    display: none;
+}
+
+.sidebar-group {
+    margin-bottom: 10px;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--hf-text-main);
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.icon-apiary {
+    color: var(--hf-primary-dark);
+}
+
+.sidebar-content {
+    padding-left: 20px;
+    background-color: #fcfcfc;
+}
+
+.hive-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    font-size: 14px;
+    color: var(--hf-text-muted);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.hive-item:hover {
+    background: var(--hf-primary);
+}
+
+.sidebar-empty {
+    padding: 16px;
+    color: var(--hf-text-muted);
+    font-size: 14px;
+    text-align: center;
+}
+
+.sidebar-empty-hives {
+    padding: 8px 16px 8px 32px;
+    color: var(--hf-text-muted);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.icon-hive {
+    color: #f59e0b;
+}
+
+/* ===========================
+   MOBILE STYLES
+   =========================== */
+@media (max-width: 768px) {
+
+    /* Oculta sidebar desktop */
+    .sidebar-desktop {
+        display: none;
+    }
+
+    /* FAB - Floating Action Button para apiários */
+    .sidebar-fab {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        bottom: 40px;
+        right: 20px;
+        z-index: 1001;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #FFB347 0%, #FF9500 100%);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow:
+            0 4px 12px rgba(255, 149, 0, 0.4),
+            0 2px 4px rgba(0, 0, 0, 0.1);
+        color: white;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar-fab:hover {
+        transform: scale(1.1);
+        box-shadow:
+            0 6px 20px rgba(255, 149, 0, 0.5),
+            0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .sidebar-fab:active {
+        transform: scale(0.95);
+    }
+
+    /* Overlay escuro */
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 1002;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* Sidebar mobile dropdown */
+    .sidebar-mobile {
+        display: block;
+        position: fixed;
+        top: 60px;
+        left: 10px;
+        right: 10px;
+        max-height: 0;
+        overflow: hidden;
+        background: var(--hf-white);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        z-index: 1003;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-mobile.open {
+        max-height: 70vh;
+        overflow-y: auto;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .sidebar-mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px 20px;
+        border-bottom: 2px solid var(--hf-primary);
+        background: var(--hf-bg-card);
+        font-weight: 700;
+        font-size: 16px;
+        color: var(--hf-text-main);
+    }
+
+    .sidebar-close-btn {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+
+    .sidebar-close-btn:hover {
+        background: rgba(0, 0, 0, 0.1);
+        color: #333;
+    }
+}
