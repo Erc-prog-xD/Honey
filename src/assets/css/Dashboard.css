@@ -79,31 +79,6 @@
     padding: 0 20px;
 }
 
-.honey-stock-card {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    background-color: #FDEEA8;
-    border: 2px solid #E5C86E;
-    border-radius: 12px;
-    padding: 15px 25px;
-    min-width: 320px;
-    gap: 40px;
-}
-
-.honey-stock-label {
-    font-size: 16px;
-    color: #333;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.honey-stock-value {
-    font-size: 36px;
-    font-weight: 700;
-    color: #222;
-}
-
 .brand-logo-large {
     height: 100px;
     width: auto;
@@ -193,26 +168,8 @@
         overflow-y: visible;
     }
 
-    .dashboard-brand-header {
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
-        padding: 0 10px;
-        margin-bottom: 25px;
-    }
-
-    .brand-logo-large {
-        display: none;
-    }
-
     .honey-stock-card {
-        min-width: auto;
-        width: 100%;
-        max-width: 320px;
-        padding: 12px 20px;
-        flex-direction: row;
-        justify-content: space-between;
-        gap: 20px;
+        display: none;
     }
 
     .honey-stock-label {
@@ -256,9 +213,7 @@
     }
 
     .honey-stock-card {
-        padding: 10px 16px;
-        max-width: 100%;
-        gap: 15px;
+        display: none;
     }
 
     .honey-stock-label {

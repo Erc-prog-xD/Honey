@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Hexagon, DollarSign, TrendingDown, BarChart3, Store } from 'lucide-react';
+import { Hexagon, ShoppingBag, TrendingDown, BarChart3, Store, Trash2, Bug, Ban } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import MapArea from '../components/MapArea';
 import DashboardCard from '../components/DashboardCard';
@@ -43,7 +43,7 @@ const Dashboard = () => {
                     <div className="section-divider">Registros</div>
                     <div className="cards-grid">
                         <DashboardCard title="Registro de Produção" icon={Hexagon} onClick={() => navigate('/registro-producao')} />
-                        <DashboardCard title="Registro de Vendas" icon={DollarSign} onClick={() => navigate('/registro-vendas')} />
+                        <DashboardCard title="Registro de Vendas" icon={ShoppingBag} onClick={() => navigate('/registro-vendas')} />
                         <DashboardCard title="Registro de Perdas" icon={TrendingDown} onClick={() => navigate('/registro-perdas')} />
                     </div>
                 </div>
@@ -51,8 +51,18 @@ const Dashboard = () => {
                 <div className="section-container">
                     <div className="section-divider">Relatórios</div>
                     <div className="cards-grid">
-                        <DashboardCard title="Desempenho de apiário" icon={BarChart3} onClick={() => navigate('/desempenho-apiario')} />
+                        <DashboardCard title="Desempenho de Apiário" icon={BarChart3} onClick={() => navigate('/desempenho-apiario')} />
                         <DashboardCard title="Relatório de Vendas" icon={Store} onClick={() => navigate('/relatorio-vendas')} />
+                        <DashboardCard title="Relatório de Perdas" icon={Trash2} onClick={() => navigate('/relatorio-perdas')} />
+                    </div>
+                </div>
+
+                <div className="section-container">
+                    <div className="section-divider">Controle</div>
+                    <div className="cards-grid">
+                        <DashboardCard title="Cadastrar Apiário" icon={Hexagon} onClick={() => navigate('/cadastro-apiario')} />
+                        <DashboardCard title="Cadastrar Colmeia" icon={Bug} onClick={() => navigate('/cadastro-colmeia')} />
+                        <DashboardCard title="Desativar Colmeia" icon={Ban} onClick={() => navigate('/desativar-colmeia')} />
                     </div>
                 </div>
             </div>
