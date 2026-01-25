@@ -37,10 +37,6 @@ const Dashboard = () => {
 
                 <div className="dashboard-brand-header">
                     <img src={logoText} alt="HoneyFlow" className="brand-logo-large" />
-                    <div className="honey-stock-card">
-                        <span className="honey-stock-label">Mel em estoque:</span>
-                        <span className="honey-stock-value">0,00L</span>
-                    </div>
                 </div>
 
                 <div className="section-container">
