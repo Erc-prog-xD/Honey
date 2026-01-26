@@ -1,18 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import '../assets/css/HiveRegistration.css';
 
 // Components
 import Navbar from '../components/Navbar';
 import ActionButtons from '../components/ActionButtons';
 import ToastCenter from '../components/Toast';
+import CustomCalendar from '../components/CustomCalendar';
 
 const LossRegistration = () => {
     const navigate = useNavigate();
     const [toast, setToast] = useState(null);
+    const [showCalendar, setShowCalendar] = useState(false);
+    const calendarRef = useRef(null);
+
     const [formData, setFormData] = useState({
         volumePerdido: '',
-        dataPerda: '',
+        dataPerda: new Date(),
         razaoMotivo: ''
     });
 
@@ -33,6 +38,7 @@ const LossRegistration = () => {
         const newLoss = {
             id: Date.now(),
             ...formData,
+            dataPerda: formData.dataPerda.toISOString(),
             createdAt: new Date().toISOString()
         };
 
@@ -52,6 +58,26 @@ const LossRegistration = () => {
         }
     };
 
+    const handleDateChange = (date) => {
+        setFormData({ ...formData, dataPerda: date });
+        setShowCalendar(false);
+    };
+
+    // Close calendar on click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+                setShowCalendar(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const formatDate = (date) => {
+        return date.toLocaleDateString('pt-BR');
+    };
+
     return (
         <div className="registration-page">
             <Navbar />
@@ -66,32 +92,43 @@ const LossRegistration = () => {
 
                 <div className="reg-full-width">
                     <div className="reg-card">
-                        <h2>Informações gerais</h2>
+                        <h2>Informações da Perda</h2>
 
                         <div className="input-group">
-                            <label>Volume perdido</label>
+                            <label>Volume perdido (L)</label>
                             <input
                                 type="number"
-                                placeholder=""
+                                placeholder="0.00"
                                 value={formData.volumePerdido}
                                 onChange={(e) => setFormData({ ...formData, volumePerdido: e.target.value })}
                             />
                         </div>
 
-                        <div className="input-group">
+                        <div className="input-group" style={{ position: 'relative' }} ref={calendarRef}>
                             <label>Data da perda</label>
-                            <input
-                                type="date"
-                                value={formData.dataPerda}
-                                onChange={(e) => setFormData({ ...formData, dataPerda: e.target.value })}
-                            />
+                            <div
+                                className="datepicker-trigger"
+                                onClick={() => setShowCalendar(!showCalendar)}
+                            >
+                                <span>{formatDate(formData.dataPerda)}</span>
+                                <CalendarIcon size={20} color="var(--hf-primary-dark)" />
+                            </div>
+
+                            {showCalendar && (
+                                <div className="datepicker-popup">
+                                    <CustomCalendar
+                                        value={formData.dataPerda}
+                                        onChange={handleDateChange}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className="input-group">
                             <label>Razão/Motivo</label>
                             <input
                                 type="text"
-                                placeholder=""
+                                placeholder="Ex: Quebra de pote, Formigas, etc."
                                 value={formData.razaoMotivo}
                                 onChange={(e) => setFormData({ ...formData, razaoMotivo: e.target.value })}
                             />
