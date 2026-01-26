@@ -13,14 +13,14 @@ const ToastCenter = ({ message, type = 'info', onClose, duration = 43000 }) => {
   const getIcon = () => {
     switch (type) {
       case 'success':
-        return <CheckCircle className="toast-center-icon" size={24} />;
+        return <CheckCircle className="toast-center-icon" size={20} />;
       case 'error':
-        return <XCircle className="toast-center-icon" size={24} />;
+        return <XCircle className="toast-center-icon" size={20} />;
       case 'warning':
-        return <AlertCircle className="toast-center-icon" size={24} />;
+        return <AlertCircle className="toast-center-icon" size={20} />;
       case 'info':
       default:
-        return <Info className="toast-center-icon" size={24} />;
+        return <Info className="toast-center-icon" size={20} />;
     }
   };
 
