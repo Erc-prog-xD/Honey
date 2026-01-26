@@ -7,6 +7,7 @@ import DashboardCard from '../components/DashboardCard';
 import Navbar from '../components/Navbar';
 import AddMenu from '../components/AddMenu';
 import '../assets/css/Dashboard.css';
+import HiveMarker from '../components/HiveMarker';
 
 // Logo
 import logoText from '../assets/img/logo-hf-completo.svg';

@@ -10,14 +10,10 @@ import Navbar from '../components/Navbar';
 import ActionButtons from '../components/ActionButtons';
 import ToastCenter from '../components/Toast';
 import CustomSelect from '../components/CustomSelect';
+import { createHiveIcon } from '../components/HiveMarker';
 
 // Custom Marker Icon
-import pinIcon from '../assets/img/pin-localizacao.svg';
-const customIcon = L.icon({
-    iconUrl: pinIcon,
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
-});
+const customIcon = createHiveIcon();
 
 const LocationPicker = ({ onLocationSelect }) => {
     const [position, setPosition] = useState(null);

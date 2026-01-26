@@ -3,18 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, Polygon, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { createHiveIcon } from './HiveMarker';
 
-// Correção para ícone padrão do Leaflet no React
-import icon from '../assets/img/pin-localizacao.svg';
-
-let DefaultIcon = L.icon({
-    iconUrl: icon,
-    iconSize: [60, 60],
-    iconAnchor: [30, 60],
-    popupAnchor: [0, -60],
-});
-
-L.Marker.prototype.options.icon = DefaultIcon;
+// Define o ícone padrão do Leaflet como o nosso HiveMarker
+L.Marker.prototype.options.icon = createHiveIcon();
 
 // Componente para voar até uma localização específica
 const FlyToLocation = ({ location }) => {
@@ -148,6 +140,7 @@ const MapArea = ({ flyToLocation }) => {
                         <Marker
                             key={hive.id}
                             position={[parseFloat(hive.lat), parseFloat(hive.lng)]}
+                            icon={createHiveIcon()} // Usa o ícone personalizado
                             eventHandlers={{
                                 click: () => {
                                     if (hive.apiario) {

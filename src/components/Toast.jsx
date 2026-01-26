@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { CheckCircle, AlertCircle, XCircle, Info, X } from 'lucide-react';
 import '../assets/css/Toast.css';
 
-const ToastCenter = ({ message, type = 'info', onClose, duration = 43000 }) => {
+const ToastCenter = ({ message, type = 'info', onClose, duration = 2000 }) => {
   useEffect(() => {
     if (duration > 0) {
       const timer = setTimeout(onClose, duration);

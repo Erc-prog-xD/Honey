@@ -9,14 +9,10 @@ import '../assets/css/ApiaryDetails.css';
 // Components e Assets
 import Navbar from '../components/Navbar';
 import ToastCenter from '../components/Toast';
-import pinIcon from '../assets/img/pin-localizacao.svg';
 import beeIcon from '../assets/img/logo_hf.svg';
+import { createHiveIcon } from '../components/HiveMarker';
 
-const customIcon = L.icon({
-    iconUrl: pinIcon,
-    iconSize: [50, 50],
-    iconAnchor: [25, 50],
-});
+const customIcon = createHiveIcon();
 
 const ApiaryDetails = () => {
     const navigate = useNavigate();
