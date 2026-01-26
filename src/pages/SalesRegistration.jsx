@@ -113,7 +113,7 @@ const SalesRegistration = () => {
                         <h2>Informações gerais</h2>
 
                         <div className="input-group">
-                            <label>Volume vendido (L)</label>
+                            <label>Volume vendido (L) <span className="required-star">*</span></label>
                             <input
                                 type="number"
                                 placeholder="0.00"
@@ -123,7 +123,7 @@ const SalesRegistration = () => {
                         </div>
 
                         <div className="input-group">
-                            <label>Tipo de mel</label>
+                            <label>Tipo de mel <span className="required-star">*</span></label>
                             <CustomSelect
                                 options={honeyTypes.map(type => ({
                                     value: type,
@@ -136,7 +136,7 @@ const SalesRegistration = () => {
                         </div>
 
                         <div className="input-group">
-                            <label>Valor total da venda (R$)</label>
+                            <label>Valor total da venda (R$) <span className="required-star">*</span></label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -147,7 +147,7 @@ const SalesRegistration = () => {
                         </div>
 
                         <div className="input-group" style={{ position: 'relative' }} ref={calendarRef}>
-                            <label>Data da venda</label>
+                            <label>Data da venda <span className="required-star">*</span></label>
                             <div
                                 className="datepicker-trigger"
                                 onClick={() => setShowCalendar(!showCalendar)}

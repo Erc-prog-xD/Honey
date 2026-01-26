@@ -147,7 +147,7 @@ const UserProfile = () => {
                         </div>
                         <form onSubmit={handleSavePersonalInfo}>
                             <div className="input-group">
-                                <label>Nome completo</label>
+                                <label>Nome completo <span className="required-star">*</span></label>
                                 <div className="input-with-icon">
                                     <div className="icon-wrapper"><User size={20} /></div>
                                     <input
@@ -160,7 +160,7 @@ const UserProfile = () => {
                             </div>
 
                             <div className="input-group">
-                                <label>E-mail</label>
+                                <label>E-mail <span className="required-star">*</span></label>
                                 <div className="input-with-icon">
                                     <div className="icon-wrapper"><Mail size={20} /></div>
                                     <input
@@ -173,7 +173,7 @@ const UserProfile = () => {
                             </div>
 
                             <div className="input-group">
-                                <label>CPF</label>
+                                <label>CPF <span className="required-star">*</span></label>
                                 <div className="input-with-icon">
                                     <div className="icon-wrapper"><Key size={20} /></div>
                                     <input
@@ -251,6 +251,7 @@ const UserProfile = () => {
                             <form className="new-user-form" onSubmit={handleAddUser}>
                                 <div className="new-user-grid">
                                     <div className="input-group">
+                                        <label>E-mail <span className="required-star">*</span></label>
                                         <div className="input-with-icon">
                                             <div className="icon-wrapper"><Mail size={20} /></div>
                                             <input
@@ -262,6 +263,7 @@ const UserProfile = () => {
                                         </div>
                                     </div>
                                     <div className="input-group">
+                                        <label>Nome <span className="required-star">*</span></label>
                                         <div className="input-with-icon">
                                             <div className="icon-wrapper"><User size={20} /></div>
                                             <input
@@ -273,6 +275,7 @@ const UserProfile = () => {
                                         </div>
                                     </div>
                                     <div className="input-group">
+                                        <label>CPF <span className="required-star">*</span></label>
                                         <div className="input-with-icon">
                                             <div className="icon-wrapper"><Key size={20} /></div>
                                             <input
@@ -284,6 +287,7 @@ const UserProfile = () => {
                                         </div>
                                     </div>
                                     <div className="input-group">
+                                        <label>Senha <span className="required-star">*</span></label>
                                         <div className="input-with-icon">
                                             <div className="icon-wrapper"><Lock size={20} /></div>
                                             <input
@@ -302,6 +306,7 @@ const UserProfile = () => {
                                         </div>
                                     </div>
                                     <div className="input-group">
+                                        <label>Confirmar Senha <span className="required-star">*</span></label>
                                         <div className="input-with-icon">
                                             <div className="icon-wrapper"><Lock size={20} /></div>
                                             <input

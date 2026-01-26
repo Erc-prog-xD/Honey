@@ -362,7 +362,7 @@ const ApiaryDetails = () => {
 
                                 <div className="input-group">
                                     <label>
-                                        Tipo de abelha
+                                        Tipo de abelha <span className="required-star">*</span>
                                     </label>
                                     <input
                                         type="text"
@@ -386,7 +386,7 @@ const ApiaryDetails = () => {
                                 </div>
 
                                 <div className="input-group">
-                                    <label>Tipo de mel</label>
+                                    <label>Tipo de mel <span className="required-star">*</span></label>
                                     <CustomSelect
                                         options={honeyTypes.map(type => ({
                                             value: type,

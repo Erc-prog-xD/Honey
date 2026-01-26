@@ -96,3 +96,9 @@ button {
   scrollbar-width: thin;
   scrollbar-color: var(--hf-primary) var(--hf-bg-main);
 }
+
+.required-star {
+  color: #d32f2f;
+  margin-left: 2px;
+  font-weight: bold;
+}

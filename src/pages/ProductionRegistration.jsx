@@ -118,7 +118,7 @@ const ProductionRegistration = () => {
                         <h2>Informações gerais</h2>
 
                         <div className="input-group">
-                            <label>Selecione o apiário</label>
+                            <label>Selecione o apiário <span className="required-star">*</span></label>
                             <div className="select-with-btn">
                                 <CustomSelect
                                     options={apiaries.map(ap => ({
@@ -134,7 +134,7 @@ const ProductionRegistration = () => {
                         </div>
 
                         <div className="input-group">
-                            <label>Volume total (Litros)</label>
+                            <label>Volume total (Litros) <span className="required-star">*</span></label>
                             <input
                                 type="number"
                                 placeholder="0.00"
@@ -144,7 +144,7 @@ const ProductionRegistration = () => {
                         </div>
 
                         <div className="input-group">
-                            <label>Tipo de mel</label>
+                            <label>Tipo de mel <span className="required-star">*</span></label>
                             <CustomSelect
                                 options={honeyTypes.map(type => ({
                                     value: type,
@@ -157,7 +157,7 @@ const ProductionRegistration = () => {
                         </div>
 
                         <div className="input-group" style={{ position: 'relative' }} ref={calendarRef}>
-                            <label>Data da extração</label>
+                            <label>Data da extração <span className="required-star">*</span></label>
                             <div
                                 className="datepicker-trigger"
                                 onClick={() => setShowCalendar(!showCalendar)}

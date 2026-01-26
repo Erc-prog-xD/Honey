@@ -111,7 +111,7 @@ const LossRegistration = () => {
                         <h2>Informações da Perda</h2>
 
                         <div className="input-group">
-                            <label>Volume perdido (L)</label>
+                            <label>Volume perdido (L) <span className="required-star">*</span></label>
                             <input
                                 type="number"
                                 placeholder="0.00"
@@ -121,7 +121,7 @@ const LossRegistration = () => {
                         </div>
 
                         <div className="input-group">
-                            <label>Tipo de mel</label>
+                            <label>Tipo de mel <span className="required-star">*</span></label>
                             <CustomSelect
                                 options={honeyTypes.map(type => ({
                                     value: type,
@@ -134,7 +134,7 @@ const LossRegistration = () => {
                         </div>
 
                         <div className="input-group" style={{ position: 'relative' }} ref={calendarRef}>
-                            <label>Data da perda</label>
+                            <label>Data da perda <span className="required-star">*</span></label>
                             <div
                                 className="datepicker-trigger"
                                 onClick={() => setShowCalendar(!showCalendar)}
@@ -154,7 +154,7 @@ const LossRegistration = () => {
                         </div>
 
                         <div className="input-group">
-                            <label>Razão/Motivo</label>
+                            <label>Razão/Motivo <span className="required-star">*</span></label>
                             <input
                                 type="text"
                                 placeholder="Ex: Quebra de pote, Formigas, etc."

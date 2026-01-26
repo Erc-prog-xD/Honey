@@ -115,20 +115,20 @@ const ApiaryRegistration = () => {
                     <div className="reg-card card-info">
                         <h2>Informações gerais</h2>
                         <div className="input-group">
-                            <label>Nome/Apelido</label>
+                            <label>Nome ou Apelido <span className="required-star">*</span></label>
                             <input
                                 type="text"
-                                placeholder=""
+                                placeholder="Ex: Apiário da Colina"
                                 value={formData.nomeApelido}
                                 onChange={(e) => setFormData({ ...formData, nomeApelido: e.target.value })}
                             />
                         </div>
 
                         <div className="input-group">
-                            <label>Tipo de abelha</label>
+                            <label>Tipo de abelha <span className="required-star">*</span></label>
                             <input
                                 type="text"
-                                placeholder=""
+                                placeholder="Ex: Apis mellifera"
                                 value={formData.tipoAbelha}
                                 onChange={(e) => setFormData({ ...formData, tipoAbelha: e.target.value })}
                             />
@@ -138,9 +138,9 @@ const ApiaryRegistration = () => {
                     {/* Right Column: Location */}
                     <div className="reg-card card-location">
                         <h2>Área do Apiário</h2>
-                        <div className="map-picker-container">
-                            <label>Desenhe a área do apiário no mapa</label>
-                            <div className="mini-map-wrapper" style={{ height: '300px' }}>
+                        <div className="input-group-map">
+                            <label>Desenhar Área no Mapa <span className="required-star">*</span></label>
+                            <div className="map-container-reg" style={{ height: '300px' }}>
                                 <MapContainer center={[-23.5505, -46.6333]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={true}>
                                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                                     <LocateUser />

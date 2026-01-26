@@ -242,7 +242,7 @@ const HiveRegistration = () => {
                         </div>
 
                         <div className="input-group">
-                            <label>Ano da colmeia <span style={{ color: 'red' }}>*</span></label>
+                            <label>Ano da colmeia <span className="required-star">*</span></label>
                             <input
                                 type="text"
                                 placeholder=""
@@ -252,7 +252,7 @@ const HiveRegistration = () => {
                         </div>
 
                         <div className="input-group">
-                            <label>Ano da rainha</label>
+                            <label>Ano da rainha <span className="required-star">*</span></label>
                             <input
                                 type="text"
                                 placeholder=""
@@ -262,7 +262,7 @@ const HiveRegistration = () => {
                         </div>
 
                         <div className="input-group autocomplete-container">
-                            <label>Tipo de mel</label>
+                            <label>Tipo de mel <span className="required-star">*</span></label>
                             <input
                                 type="text"
                                 placeholder="Digite ou selecione o tipo de mel"
@@ -298,7 +298,7 @@ const HiveRegistration = () => {
                     <div className="reg-card card-location">
                         <h2>Localização <span style={{ color: 'red' }}>*</span></h2>
                         <div className="map-picker-container">
-                            <label>Selecione a localização no mapa</label>
+                            <label>Selecione a localização no mapa <span className="required-star">*</span></label>
                             <div className="mini-map-wrapper">
                                 <MapContainer center={[-23.5505, -46.6333]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
