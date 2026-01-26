@@ -248,7 +248,7 @@ const ApiaryDetails = () => {
                                 hives.map((hive, index) => (
                                     <div
                                         key={hive.id}
-                                        className={`hive-row ${hive.active === false ? 'inactive' : ''}`}
+                                        className={`hive-row ${hive.active === false ? 'inactive' : ''} ${selectedHive?.id === hive.id ? 'selected' : ''}`}
                                         onClick={() => handleHiveClick(hive)}
                                     >
                                         <div className="hive-info">
@@ -262,35 +262,13 @@ const ApiaryDetails = () => {
                                             </div>
                                         </div>
 
-                                        <div className="hive-actions">
-                                            {hive.active !== false && (
-                                                <button
-                                                    className="icon-btn power on"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        // Redireciona para página de desativação
-                                                        navigate('/desativar-colmeia', {
-                                                            state: {
-                                                                apiarioId: apiary.id,
-                                                                colmeiaId: hive.id
-                                                            }
-                                                        });
-                                                    }}
-                                                    title="Desativar"
-                                                >
-                                                    <Power size={16} />
-                                                </button>
-                                            )}
-                                            <button
-                                                className="icon-btn trash"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteHive(hive.id);
-                                                }}
-                                                title="Remover"
+                                        <div className="hive-status">
+                                            <span
+                                                className={`status-icon ${hive.active === false ? 'inactive' : 'active'}`}
+                                                title={hive.active === false ? 'Inativa' : 'Ativa'}
                                             >
-                                                <Trash2 size={16} />
-                                            </button>
+                                                <Power size={16} />
+                                            </span>
                                         </div>
                                     </div>
                                 ))

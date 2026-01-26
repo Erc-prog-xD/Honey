@@ -123,6 +123,27 @@
     flex-direction: column;
 }
 
+.apiary-selected-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border-bottom: 2px solid var(--hf-primary);
+}
+
+.apiary-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--hf-text-muted);
+}
+
+.apiary-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--hf-text-main);
+}
+
 .hives-header-bar {
     display: flex;
     align-items: center;
@@ -168,6 +189,7 @@
     background-color: var(--hf-white);
     border-bottom: 1px solid #eee;
     transition: all 0.2s;
+    cursor: pointer;
 }
 
 .hive-row:hover {
@@ -177,6 +199,11 @@
 .hive-row.inactive {
     background-color: #f0f0f0;
     opacity: 0.7;
+}
+
+.hive-row.selected {
+    background-color: #fff8e1;
+    border-left: 4px solid var(--hf-primary);
 }
 
 .hive-info {
@@ -253,6 +280,30 @@
 }
 
 .icon-btn.trash:hover {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* Status indicator (display only) */
+.hive-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-icon {
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-icon.active {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-icon.inactive {
     background: #ffebee;
     color: #c62828;
 }

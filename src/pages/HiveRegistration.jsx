@@ -15,7 +15,26 @@ import { createHiveIcon } from '../components/HiveMarker';
 // Custom Marker Icon
 const customIcon = createHiveIcon();
 
-const LocationPicker = ({ onLocationSelect }) => {
+// Função para verificar se um ponto está dentro de um polígono (Ray-casting algorithm)
+const isPointInPolygon = (point, polygon) => {
+    if (!polygon || polygon.length < 3) return false;
+
+    const x = point.lat;
+    const y = point.lng;
+    let inside = false;
+
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i].lat, yi = polygon[i].lng;
+        const xj = polygon[j].lat, yj = polygon[j].lng;
+
+        const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+
+    return inside;
+};
+
+const LocationPicker = ({ onLocationSelect, apiaryPolygon, showError }) => {
     const [position, setPosition] = useState(null);
     const [hasLocated, setHasLocated] = useState(false);
     const map = useMap();
@@ -23,16 +42,25 @@ const LocationPicker = ({ onLocationSelect }) => {
     useEffect(() => {
         if (!hasLocated) {
             map.locate().on("locationfound", function (e) {
-                setPosition(e.latlng);
+                // Apenas centraliza o mapa na localização do usuário
+                // NÃO seleciona automaticamente - usuário precisa clicar
                 map.flyTo(e.latlng, 15);
-                onLocationSelect(e.latlng.lat, e.latlng.lng);
                 setHasLocated(true);
             });
         }
-    }, [map, onLocationSelect, hasLocated]);
+    }, [map, hasLocated]);
 
     useMapEvents({
         click(e) {
+            // Verifica se o clique está dentro do polígono do apiário
+            if (apiaryPolygon && apiaryPolygon.length > 0) {
+                const clickedPoint = { lat: e.latlng.lat, lng: e.latlng.lng };
+                if (!isPointInPolygon(clickedPoint, apiaryPolygon)) {
+                    showError('A colmeia deve ser posicionada dentro da área do apiário!');
+                    return;
+                }
+            }
+            // Somente quando o usuário clica dentro da área é que define a posição
             setPosition(e.latlng);
             onLocationSelect(e.latlng.lat, e.latlng.lng);
         },
@@ -105,8 +133,17 @@ const HiveRegistration = () => {
     };
 
     const handleSave = () => {
-        if (!formData.apiario || !formData.anoColmeia || !coords.lat) {
-            showToast('Por favor, preencha as informações básicas e selecione o local no mapa.', 'error');
+        // Validação de campos obrigatórios
+        if (!formData.apiario) {
+            showToast('Por favor, selecione um apiário.', 'error');
+            return;
+        }
+        if (!formData.anoColmeia) {
+            showToast('Por favor, informe o ano da colmeia.', 'error');
+            return;
+        }
+        if (!coords.lat || !coords.lng) {
+            showToast('Obrigatório: Clique no mapa para selecionar a localização da colmeia!', 'error');
             return;
         }
 
@@ -150,7 +187,7 @@ const HiveRegistration = () => {
                     <div className="reg-card card-info">
                         <h2>Informações gerais</h2>
                         <div className="input-group">
-                            <label>Selecione o apiário</label>
+                            <label>Selecione o apiário <span style={{ color: 'red' }}>*</span></label>
                             <div className="select-with-btn">
                                 <CustomSelect
                                     options={apiaries.map(ap => ({
@@ -166,7 +203,7 @@ const HiveRegistration = () => {
                         </div>
 
                         <div className="input-group">
-                            <label>Ano da colmeia</label>
+                            <label>Ano da colmeia <span style={{ color: 'red' }}>*</span></label>
                             <input
                                 type="text"
                                 placeholder=""
@@ -188,13 +225,17 @@ const HiveRegistration = () => {
 
                     {/* Right Column: Location */}
                     <div className="reg-card card-location">
-                        <h2>Localização</h2>
+                        <h2>Localização <span style={{ color: 'red' }}>*</span></h2>
                         <div className="map-picker-container">
                             <label>Selecione a localização no mapa</label>
                             <div className="mini-map-wrapper">
                                 <MapContainer center={[-23.5505, -46.6333]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                    <LocationPicker onLocationSelect={handleLocationSelect} />
+                                    <LocationPicker
+                                        onLocationSelect={handleLocationSelect}
+                                        apiaryPolygon={selectedApiary?.polygon}
+                                        showError={(msg) => showToast(msg, 'error')}
+                                    />
                                     <FlyToApiary apiary={selectedApiary} />
 
                                     {/* Mostra o polígono do apiário selecionado */}
