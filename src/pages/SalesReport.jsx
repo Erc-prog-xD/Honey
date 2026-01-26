@@ -214,29 +214,95 @@ const SalesReport = () => {
 
                 <div className="charts-grid">
                     <div className="chart-card">
-                        <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={salesData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip formatter={(value) => [`R$ ${value}`, 'Vendas']} />
-                                <Bar dataKey="valor" fill="#4dd0e1" radius={[4, 4, 0, 0]} />
+                        <h3 className="chart-title">Vendas (R$)</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart
+                                data={salesData}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                            >
+                                <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#E0E0E0"
+                                    vertical={false}
+                                />
+                                <XAxis
+                                    dataKey="name"
+                                    axisLine={{ stroke: '#666', strokeWidth: 2 }}
+                                    tickLine={{ stroke: '#666' }}
+                                    tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
+                                    dy={10}
+                                />
+                                <YAxis
+                                    axisLine={{ stroke: '#666', strokeWidth: 2 }}
+                                    tickLine={{ stroke: '#666' }}
+                                    tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
+                                    tickFormatter={(value) => `R$ ${value}`}
+                                    dx={-10}
+                                />
+                                <Tooltip
+                                    formatter={(value) => [`R$ ${value}`, 'Vendas']}
+                                    contentStyle={{
+                                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                        border: '1px solid #ddd',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                    }}
+                                    labelStyle={{ fontWeight: 600, color: '#333' }}
+                                />
+                                <Bar
+                                    dataKey="valor"
+                                    fill="#4dd0e1"
+                                    radius={[6, 6, 0, 0]}
+                                    maxBarSize={60}
+                                />
                             </BarChart>
                         </ResponsiveContainer>
-                        <h3 className="chart-title">Vendas (R$)</h3>
                     </div>
 
                     <div className="chart-card">
-                        <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={priceData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip formatter={(value) => [`R$ ${value}/L`, 'Preço']} />
-                                <Bar dataKey="valor" fill="#ffbd59" radius={[4, 4, 0, 0]} />
+                        <h3 className="chart-title">Variação de preços por litro (R$/L)</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart
+                                data={priceData}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                            >
+                                <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#E0E0E0"
+                                    vertical={false}
+                                />
+                                <XAxis
+                                    dataKey="name"
+                                    axisLine={{ stroke: '#666', strokeWidth: 2 }}
+                                    tickLine={{ stroke: '#666' }}
+                                    tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
+                                    dy={10}
+                                />
+                                <YAxis
+                                    axisLine={{ stroke: '#666', strokeWidth: 2 }}
+                                    tickLine={{ stroke: '#666' }}
+                                    tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
+                                    tickFormatter={(value) => `R$ ${value}`}
+                                    dx={-10}
+                                />
+                                <Tooltip
+                                    formatter={(value) => [`R$ ${value}/L`, 'Preço']}
+                                    contentStyle={{
+                                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                        border: '1px solid #ddd',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                    }}
+                                    labelStyle={{ fontWeight: 600, color: '#333' }}
+                                />
+                                <Bar
+                                    dataKey="valor"
+                                    fill="#ffbd59"
+                                    radius={[6, 6, 0, 0]}
+                                    maxBarSize={60}
+                                />
                             </BarChart>
                         </ResponsiveContainer>
-                        <h3 className="chart-title">Variação de preços por litro (R$/L)</h3>
                     </div>
                 </div>
             </main>

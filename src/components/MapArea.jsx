@@ -134,9 +134,9 @@ const MapArea = ({ flyToLocation }) => {
                     />
                 ))}
 
-                {/* Renderiza marcadores para cada colmeia salva */}
+                {/* Renderiza marcadores para cada colmeia salva (apenas ativas) */}
                 {hives.map((hive) => (
-                    hive.lat && hive.lng && (
+                    hive.lat && hive.lng && hive.active !== false && (
                         <Marker
                             key={hive.id}
                             position={[parseFloat(hive.lat), parseFloat(hive.lng)]}

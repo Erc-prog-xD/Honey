@@ -44,9 +44,9 @@ const Sidebar = ({ onHiveSelect }) => {
         setIsMobileMenuOpen(false); // Fecha o menu ao selecionar
     };
 
-    // Agrupa colmeias por apiário
+    // Agrupa colmeias por apiário (apenas ativas)
     const getHivesForApiary = (apiaryId) => {
-        return hives.filter(hive => hive.apiario === String(apiaryId));
+        return hives.filter(hive => hive.apiario === String(apiaryId) && hive.active !== false);
     };
 
     const toggleMobileMenu = () => {

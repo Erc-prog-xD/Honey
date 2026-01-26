@@ -1,0 +1,106 @@
+.hive-stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+    border-radius: 12px;
+    background-color: var(--hf-white);
+    flex: 1;
+    min-width: 150px;
+    transition: transform 0.2s ease;
+    border: 1px solid #e8e8e8;
+    box-shadow: none;
+}
+
+.hive-stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon-wrapper {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--hf-text-main);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--hf-text-muted);
+    font-weight: 600;
+    letter-spacing: 0.8px;
+}
+
+/* Variantes de Cor */
+
+/* Default (White/Neutral) */
+.hive-stat-card.default {
+    background-color: #FAFAFA;
+    border: 1px solid #EBEBEB;
+}
+
+.hive-stat-card.default .stat-icon-wrapper {
+    color: var(--hf-primary);
+}
+
+.hive-stat-card.default .stat-value {
+    color: var(--hf-text-main);
+}
+
+/* Success (Green) - Ativas */
+.hive-stat-card.success {
+    background-color: #E8F5E9;
+    border: 1px solid #C8E6C9;
+}
+
+.hive-stat-card.success .stat-icon-wrapper {
+    color: #4CAF50;
+}
+
+.hive-stat-card.success .stat-value {
+    color: #2E7D32;
+}
+
+/* Danger (Red/Pink) - Inativas */
+.hive-stat-card.danger {
+    background-color: #FFEBEE;
+    border: 1px solid #FFCDD2;
+}
+
+.hive-stat-card.danger .stat-icon-wrapper {
+    color: #F44336;
+}
+
+.hive-stat-card.danger .stat-value {
+    color: #C62828;
+}
+
+/* Warning/Production (Yellow/Orange) */
+.hive-stat-card.warning {
+    background-color: #FFF8E1;
+    border: 1px solid #FFECB3;
+}
+
+.hive-stat-card.warning .stat-icon-wrapper {
+    color: #FFA726;
+}
+
+.hive-stat-card.warning .stat-value {
+    color: var(--hf-primary-dark);
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import '../assets/css/HiveRegistration.css';
 
@@ -27,13 +27,30 @@ const HiveDeactivation = () => {
         dataDesativacao: new Date()
     });
 
+    const location = useLocation();
+
     // Carrega apiários e colmeias do localStorage
     useEffect(() => {
         const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
         const storedHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
         setApiaries(storedApiaries);
         setHives(storedHives);
-    }, []);
+
+        // Preenche dados se vierem da navegação (ApiaryDetails)
+        if (location.state?.apiarioId) {
+            setFormData(prev => ({ ...prev, apiario: String(location.state.apiarioId) }));
+        }
+
+        // Se tiver colmeiaId, preenche também (precisa esperar carregar hives ou apenas setar)
+        // Como o useEffect roda após render, podemos setar, mas o filtro de colmeias depende do apiário estar setado
+        if (location.state?.colmeiaId) {
+            setFormData(prev => ({
+                ...prev,
+                apiario: String(location.state.apiarioId),
+                colmeia: String(location.state.colmeiaId)
+            }));
+        }
+    }, [location.state]);
 
     // Filtra colmeias quando o apiário é selecionado
     useEffect(() => {
@@ -43,8 +60,9 @@ const HiveDeactivation = () => {
         } else {
             setFilteredHives([]);
         }
-        // Reset colmeia selection when apiario changes
-        setFormData(prev => ({ ...prev, colmeia: '' }));
+
+        // Só reseta a colmeia se ela não estiver válida para o novo apiário
+        // E evita resetar se acabamos de preencher via location.state (que seta ambos)
     }, [formData.apiario, hives]);
 
     const showToast = (message, type) => {
@@ -72,9 +90,20 @@ const HiveDeactivation = () => {
         };
 
         try {
+            // Salva o registro de desativação
             const existingDeactivations = JSON.parse(localStorage.getItem('hf_deactivated_hives') || '[]');
             const updatedDeactivations = [...existingDeactivations, newDeactivation];
             localStorage.setItem('hf_deactivated_hives', JSON.stringify(updatedDeactivations));
+
+            // ATUALIZA o status da colmeia em hf_hives
+            const storedHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
+            const updatedHives = storedHives.map(hive => {
+                if (String(hive.id) === String(formData.colmeia)) {
+                    return { ...hive, active: false };
+                }
+                return hive;
+            });
+            localStorage.setItem('hf_hives', JSON.stringify(updatedHives));
 
             setIsModalOpen(false);
             showToast('Colmeia desativada com sucesso!', 'success');

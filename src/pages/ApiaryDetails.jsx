@@ -8,9 +8,10 @@ import '../assets/css/ApiaryDetails.css';
 
 // Components e Assets
 import Navbar from '../components/Navbar';
-import ToastCenter from '../components/Toast';
+import toastCenter from '../components/Toast';
 import beeIcon from '../assets/img/logo_hf.svg';
 import { createHiveIcon } from '../components/HiveMarker';
+import HiveStatCard from '../components/HiveStatCard';
 
 const customIcon = createHiveIcon();
 
@@ -32,8 +33,19 @@ const ApiaryDetails = () => {
 
     const handleModalToggleActive = () => {
         if (selectedHive) {
-            handleToggleHive(selectedHive.id);
-            setSelectedHive(prev => ({ ...prev, active: !prev.active }));
+            if (selectedHive.active !== false) {
+                // Se estiver ativa e for desativar, redireciona para página de desativação
+                navigate('/desativar-colmeia', {
+                    state: {
+                        apiarioId: apiary.id,
+                        colmeiaId: selectedHive.id
+                    }
+                });
+            } else {
+                // Se estiver inativa e for ativar, mantém lógica simples (toggle)
+                handleToggleHive(selectedHive.id);
+                setSelectedHive(prev => ({ ...prev, active: !prev.active }));
+            }
         }
     };
 
@@ -186,26 +198,30 @@ const ApiaryDetails = () => {
 
                 {/* Estatísticas Rápidas */}
                 <div className="stats-bar">
-                    <div className="stat-item">
-                        <Hexagon size={18} />
-                        <span className="stat-value">{hives.length}</span>
-                        <span className="stat-label">Colmeias</span>
-                    </div>
-                    <div className="stat-item active">
-                        <Power size={18} />
-                        <span className="stat-value">{activeHives}</span>
-                        <span className="stat-label">Ativas</span>
-                    </div>
-                    <div className="stat-item inactive">
-                        <Power size={18} />
-                        <span className="stat-value">{inactiveHives}</span>
-                        <span className="stat-label">Inativas</span>
-                    </div>
-                    <div className="stat-item production">
-                        <Droplets size={18} />
-                        <span className="stat-value">{formData.volumeProduzido}L</span>
-                        <span className="stat-label">Produção</span>
-                    </div>
+                    <HiveStatCard
+                        icon={Hexagon}
+                        value={hives.length}
+                        label="Colmeias"
+                        color="default"
+                    />
+                    <HiveStatCard
+                        icon={Power}
+                        value={activeHives}
+                        label="Ativas"
+                        color="success"
+                    />
+                    <HiveStatCard
+                        icon={Power}
+                        value={inactiveHives}
+                        label="Inativas"
+                        color="danger"
+                    />
+                    <HiveStatCard
+                        icon={Droplets}
+                        value={`${formData.volumeProduzido}L`}
+                        label="Produção"
+                        color="warning"
+                    />
                 </div>
 
                 <div className="apiary-content">
@@ -251,7 +267,18 @@ const ApiaryDetails = () => {
                                                 className={`icon-btn power ${hive.active === false ? 'off' : 'on'}`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleToggleHive(hive.id);
+                                                    if (hive.active !== false) {
+                                                        // Se estiver ativa e for desativar, redireciona para página de desativação
+                                                        navigate('/desativar-colmeia', {
+                                                            state: {
+                                                                apiarioId: apiary.id,
+                                                                colmeiaId: hive.id
+                                                            }
+                                                        });
+                                                    } else {
+                                                        // Se estiver inativa e for ativar, mantém lógica simples (toggle)
+                                                        handleToggleHive(hive.id);
+                                                    }
                                                 }}
                                                 title={hive.active === false ? 'Ativar' : 'Desativar'}
                                             >
@@ -342,7 +369,8 @@ const ApiaryDetails = () => {
                                     <input
                                         type="text"
                                         value={formData.volumeProduzido}
-                                        onChange={(e) => setFormData({ ...formData, volumeProduzido: e.target.value })}
+                                        readOnly
+                                        className="readonly"
                                         placeholder="Ex: 450"
                                     />
                                 </div>

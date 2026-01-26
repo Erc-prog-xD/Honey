@@ -104,60 +104,7 @@
     border-bottom: 1px solid #eee;
 }
 
-.stat-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 12px;
-    background: #f8f9fa;
-    border-radius: 12px;
-    color: var(--hf-text-muted);
-}
 
-.stat-item svg {
-    color: var(--hf-text-muted);
-}
-
-.stat-item.active {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-    color: #2e7d32;
-}
-
-.stat-item.active svg {
-    color: #2e7d32;
-}
-
-.stat-item.inactive {
-    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-    color: #c62828;
-}
-
-.stat-item.inactive svg {
-    color: #c62828;
-}
-
-.stat-item.production {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-    color: #e65100;
-}
-
-.stat-item.production svg {
-    color: #e65100;
-}
-
-.stat-value {
-    font-size: 18px;
-    font-weight: 700;
-}
-
-.stat-label {
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
 
 /* Content Layout */
 .apiary-content {
