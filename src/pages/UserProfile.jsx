@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, UserPlus, Trash2, ArrowLeft, Shield, Eye, EyeOff, Key } from 'lucide-react';
+import emailjs from '@emailjs/browser';
+import { User, Mail, Lock, UserPlus, Trash2, ArrowLeft, Shield, Eye, EyeOff, Key, Check, XCircle } from 'lucide-react';
 import '../assets/css/HiveRegistration.css'; // Reusing some grid styles
 import '../assets/css/UserProfile.css';
 
@@ -12,6 +13,38 @@ const UserProfile = () => {
     const navigate = useNavigate();
     const [toast, setToast] = useState(null);
     const [users, setUsers] = useState([]);
+
+    // Helper: Mask CPF (000.000.000-00)
+    const maskCPF = (value) => {
+        return value
+            .replace(/\D/g, '')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+            .replace(/(-\d{2})\d+?$/, '$1');
+    };
+
+    // Helper: Validate CPF Checksum
+    const validateCPF = (cpf) => {
+        const cleanCPF = String(cpf).replace(/\D/g, '');
+        if (cleanCPF.length !== 11 || /^(\d)\1+$/.test(cleanCPF)) return false;
+
+        let sum = 0;
+        let rest;
+
+        for (let i = 1; i <= 9; i++) sum += parseInt(cleanCPF.substring(i - 1, i)) * (11 - i);
+        rest = (sum * 10) % 11;
+        if (rest === 10 || rest === 11) rest = 0;
+        if (rest !== parseInt(cleanCPF.substring(9, 10))) return false;
+
+        sum = 0;
+        for (let i = 1; i <= 10; i++) sum += parseInt(cleanCPF.substring(i - 1, i)) * (12 - i);
+        rest = (sum * 10) % 11;
+        if (rest === 10 || rest === 11) rest = 0;
+        if (rest !== parseInt(cleanCPF.substring(10, 11))) return false;
+
+        return true;
+    };
 
     // Personal Info State
     const [personalInfo, setPersonalInfo] = useState({
@@ -69,6 +102,11 @@ const UserProfile = () => {
     const handleSavePersonalInfo = (e) => {
         e.preventDefault();
 
+        if (personalInfo.cpf && !validateCPF(personalInfo.cpf)) {
+            showToast('CPF pessoal inválido!', 'error');
+            return;
+        }
+
         if (personalInfo.password && personalInfo.password !== personalInfo.confirmPassword) {
             showToast('As senhas não coincidem!', 'error');
             return;
@@ -89,6 +127,11 @@ const UserProfile = () => {
             return;
         }
 
+        if (!validateCPF(newUser.cpf)) {
+            showToast('O CPF digitado é inválido!', 'error');
+            return;
+        }
+
         if (newUser.password !== newUser.confirmPassword) {
             showToast('As senhas não coincidem!', 'error');
             return;
@@ -99,13 +142,35 @@ const UserProfile = () => {
             ...newUser
         };
 
+        // Enviar E-mail de Boas-vindas via EmailJS
+        const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+        const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_WELCOME_ID;
+        const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+        if (serviceId && templateId && publicKey) {
+            const templateParams = {
+                user_name: newUser.name,
+                user_email: newUser.email,
+                user_password: newUser.password,
+                login_url: window.location.origin // Redireciona para a home/login do app
+            };
+
+            emailjs.send(serviceId, templateId, templateParams, publicKey)
+                .then(() => {
+                    console.log('E-mail de boas-vindas enviado!');
+                })
+                .catch((err) => {
+                    console.error('Erro ao enviar e-mail:', err);
+                });
+        }
+
         const updatedUsers = [...users, userToAdd];
         setUsers(updatedUsers);
         localStorage.setItem('hf_users', JSON.stringify(updatedUsers));
 
         setNewUser({ name: '', email: '', cpf: '', password: '', confirmPassword: '', role: 'Operador' });
         setShowNewUserForm(false);
-        showToast('Usuário cadastrado com sucesso!', 'success');
+        showToast('Usuário cadastrado e e-mail enviado!', 'success');
     };
 
     const handleDeleteUser = (id) => {
@@ -179,9 +244,14 @@ const UserProfile = () => {
                                     <input
                                         type="text"
                                         value={personalInfo.cpf || ''}
-                                        onChange={(e) => setPersonalInfo({ ...personalInfo, cpf: e.target.value })}
+                                        onChange={(e) => setPersonalInfo({ ...personalInfo, cpf: maskCPF(e.target.value) })}
                                         placeholder="000.000.000-00"
                                     />
+                                    {personalInfo.cpf && personalInfo.cpf.length === 14 && (
+                                        <div className={`validation-icon ${validateCPF(personalInfo.cpf) ? 'valid' : 'invalid'}`}>
+                                            {validateCPF(personalInfo.cpf) ? <Check size={18} /> : <XCircle size={18} />}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -282,8 +352,13 @@ const UserProfile = () => {
                                                 type="text"
                                                 placeholder="CPF"
                                                 value={newUser.cpf}
-                                                onChange={(e) => setNewUser({ ...newUser, cpf: e.target.value })}
+                                                onChange={(e) => setNewUser({ ...newUser, cpf: maskCPF(e.target.value) })}
                                             />
+                                            {newUser.cpf && newUser.cpf.length === 14 && (
+                                                <div className={`validation-icon ${validateCPF(newUser.cpf) ? 'valid' : 'invalid'}`}>
+                                                    {validateCPF(newUser.cpf) ? <Check size={18} /> : <XCircle size={18} />}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="input-group">

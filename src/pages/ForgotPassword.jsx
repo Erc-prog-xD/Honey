@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Mail, ArrowLeft } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import emailjs from '@emailjs/browser';
 import '../assets/css/ForgotPassword.css';
 import logoBee from '../assets/img/logo_hf.svg';
 import ToastCenter from '../components/Toast';
@@ -37,18 +38,32 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      // Simular chamada à API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_RECOVERY_ID;
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
-      showToast('Email de recuperação enviado com sucesso!', 'success');
+      console.log('Tentando enviar e-mail com:', { serviceId, templateId, publicKey: publicKey ? 'PRESENTE' : 'AUSENTE' });
+
+      if (serviceId && templateId && publicKey) {
+        const templateParams = {
+          user_email: email,
+          reset_link: `${window.location.origin}/reset-password` // Ajuste conforme sua rota de reset
+        };
+
+        const result = await emailjs.send(serviceId, templateId, templateParams, publicKey);
+        console.log('Sucesso EmailJS:', result.text);
+      } else {
+        console.warn('Configurações de E-mail ausentes no .env');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+
       setIsSubmitted(true);
+      showToast('E-mail enviado! Verifique sua caixa de entrada.', 'success');
 
-      // Redirecionar após 2 segundos
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
+      // Não redireciona imediatamente para o usuário ler a mensagem de sucesso
     } catch (error) {
-      showToast('Erro ao enviar email de recuperação. Tente novamente.', 'error');
+      console.error('Erro detalhado EmailJS:', error);
+      showToast(`Erro: ${error.text || 'Falha ao enviar e-mail'}`, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -62,49 +77,58 @@ const ForgotPassword = () => {
     <div className="forgot-password-container">
       <div className="forgot-password-card">
 
-        {/* Lado Esquerdo - Amarelo */}
+        {/* Lado Esquerdo - Premium Yellow Panel */}
         <div className="left-panel">
           <img src={logoBee} alt="Bee Logo" className="bee-logo" />
         </div>
 
-        {/* Lado Direito - Branco */}
+        {/* Lado Direito - Form Panel */}
         <div className="right-panel">
           <button className="back-btn" onClick={handleGoBack} aria-label="Voltar">
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} />
             <span>Voltar</span>
           </button>
 
-          <h1>Recuperar Senha</h1>
-          <p className="subtitle">
-            {isSubmitted
-              ? 'Um email de recuperação foi enviado para você. Verifique sua caixa de entrada.'
-              : 'Insira o email associado à sua conta para receber um link de redefinição de senha.'}
-          </p>
-
           {!isSubmitted ? (
-            <form className="forgot-form" onSubmit={handleSubmit}>
-              <Input
-                type="email"
-                placeholder="Email"
-                icon={Mail}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-                required
-              />
+            <>
+              <h1>Recuperar Senha</h1>
+              <p className="subtitle">
+                Insira o e-mail associado à sua conta para receber um link de redefinição de senha.
+              </p>
 
-              <button
-                type="submit"
-                className="submit-btn"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Enviando...' : 'Enviar Link de Recuperação'}
-              </button>
-            </form>
+              <form className="forgot-form" onSubmit={handleSubmit}>
+                <Input
+                  type="email"
+                  placeholder="Seu e-mail cadastrado"
+                  icon={Mail}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                  required
+                />
+
+                <button
+                  type="submit"
+                  className="submit-btn"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Enviando...' : 'Enviar Instruções'}
+                </button>
+              </form>
+            </>
           ) : (
             <div className="success-message">
-              <div className="success-icon">✓</div>
-              <p>Você será redirecionado em breve...</p>
+              <div className="success-icon">
+                <CheckCircle size={40} />
+              </div>
+              <h1>E-mail enviado!</h1>
+              <p className="subtitle">
+                Enviamos um link de recuperação para <strong>{email}</strong>.
+                Por favor, verifique sua caixa de entrada e spam.
+              </p>
+              <button className="submit-btn" onClick={handleGoBack}>
+                Voltar ao Login
+              </button>
             </div>
           )}
         </div>

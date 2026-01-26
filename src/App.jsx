@@ -14,6 +14,7 @@ import ApiaryPerformance from './pages/ApiaryPerformance';
 import ApiaryDetails from './pages/ApiaryDetails';
 import LossReport from './pages/LossReport';
 import UserProfile from './pages/UserProfile';
+import ResetPassword from './pages/ResetPassword';
 
 import './assets/css/global.css';
 
@@ -23,6 +24,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/menu" element={<Menu />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/cadastro-colmeia" element={<HiveRegistration />} />
