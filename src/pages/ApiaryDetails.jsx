@@ -8,7 +8,8 @@ import '../assets/css/ApiaryDetails.css';
 
 // Components e Assets
 import Navbar from '../components/Navbar';
-import toastCenter from '../components/Toast';
+import CustomSelect from '../components/CustomSelect';
+import ToastCenter from '../components/Toast';
 import beeIcon from '../assets/img/logo_hf.svg';
 import { createHiveIcon } from '../components/HiveMarker';
 import HiveStatCard from '../components/HiveStatCard';
@@ -22,6 +23,7 @@ const ApiaryDetails = () => {
     const [hives, setHives] = useState([]);
     const [toast, setToast] = useState(null);
     const [selectedHive, setSelectedHive] = useState(null);
+    const [honeyTypes, setHoneyTypes] = useState([]);
 
     const handleHiveClick = (hive) => {
         setSelectedHive(hive);
@@ -52,7 +54,8 @@ const ApiaryDetails = () => {
     const [formData, setFormData] = useState({
         nomeApelido: '',
         tipoAbelha: '',
-        volumeProduzido: ''
+        volumeProduzido: '',
+        tipoMel: ''
     });
 
     const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -67,7 +70,8 @@ const ApiaryDetails = () => {
             setFormData({
                 nomeApelido: foundApiary.nomeApelido || 'Apiário 1',
                 tipoAbelha: foundApiary.tipoAbelha || 'Apis mellifera',
-                volumeProduzido: foundApiary.volumeProduzido || '450'
+                volumeProduzido: foundApiary.volumeProduzido || '450',
+                tipoMel: foundApiary.tipoMel || ''
             });
         } else {
             // Dados mockados para demonstração
@@ -81,9 +85,14 @@ const ApiaryDetails = () => {
             setFormData({
                 nomeApelido: 'Apiário Principal',
                 tipoAbelha: 'Apis mellifera',
-                volumeProduzido: '450'
+                volumeProduzido: '450',
+                tipoMel: ''
             });
         }
+
+        // Carrega tipos de mel
+        const storedHoneyTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
+        setHoneyTypes(storedHoneyTypes);
 
         // Carrega colmeias do apiário
         const storedHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
@@ -121,9 +130,27 @@ const ApiaryDetails = () => {
         showToast('Status da colmeia atualizado!', 'success');
     };
 
+    const handleSaveApiaryData = (updatedData) => {
+        const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
+        const updatedApiaries = storedApiaries.map(a =>
+            String(a.id) === String(id) ? { ...a, ...updatedData } : a
+        );
+        localStorage.setItem('hf_apiaries', JSON.stringify(updatedApiaries));
+        setApiary(prev => ({ ...prev, ...updatedData }));
+    };
+
     const handleSaveTitle = () => {
         setIsEditingTitle(false);
+        handleSaveApiaryData({ nomeApelido: formData.nomeApelido });
         showToast('Nome atualizado com sucesso!', 'success');
+    };
+
+    const handleSaveInfo = () => {
+        handleSaveApiaryData({
+            tipoAbelha: formData.tipoAbelha,
+            tipoMel: formData.tipoMel
+        });
+        showToast('Informações atualizadas com sucesso!', 'success');
     };
 
     const handleBack = () => navigate('/dashboard');
@@ -303,6 +330,12 @@ const ApiaryDetails = () => {
                                     </label>
                                     <input type="text" value={selectedHive.anoRainha || ''} readOnly className="readonly" />
                                 </div>
+                                <div className="input-group">
+                                    <label>
+                                        Tipo de mel
+                                    </label>
+                                    <input type="text" value={selectedHive.tipoMel || ''} readOnly className="readonly" />
+                                </div>
 
                                 <div className="hive-panel-actions">
                                     {selectedHive.active !== false && (
@@ -353,6 +386,19 @@ const ApiaryDetails = () => {
                                 </div>
 
                                 <div className="input-group">
+                                    <label>Tipo de mel</label>
+                                    <CustomSelect
+                                        options={honeyTypes.map(type => ({
+                                            value: type,
+                                            label: type
+                                        }))}
+                                        value={formData.tipoMel}
+                                        onChange={(val) => setFormData({ ...formData, tipoMel: val })}
+                                        placeholder="Selecione o tipo de mel"
+                                    />
+                                </div>
+
+                                <div className="input-group">
                                     <label>
                                         Localização
                                     </label>
@@ -364,10 +410,16 @@ const ApiaryDetails = () => {
                                     />
                                 </div>
 
-                                <button className="btn-sair" onClick={handleBack}>
-                                    <ArrowLeft size={16} />
-                                    Voltar ao Dashboard
-                                </button>
+                                <div className="hive-panel-actions">
+                                    <button className="btn-action-panel" onClick={handleSaveInfo} style={{ backgroundColor: 'var(--hf-primary)', color: 'var(--hf-text-main)' }}>
+                                        <Plus size={16} />
+                                        Salvar Alterações
+                                    </button>
+                                    <button className="btn-sair" onClick={handleBack}>
+                                        <ArrowLeft size={16} />
+                                        Voltar
+                                    </button>
+                                </div>
                             </>
                         )}
                     </div>
