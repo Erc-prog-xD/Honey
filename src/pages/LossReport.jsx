@@ -14,7 +14,8 @@ const LossReport = () => {
     const [filterType, setFilterType] = useState('honey'); // 'honey' or 'reason'
     const [periodo, setPeriodo] = useState('ano');
     const [ano, setAno] = useState('2025');
-    const [tipoMel, setTipoMel] = useState('silvestre');
+    const [tipoMel, setTipoMel] = useState('');
+    const [honeyTypes, setHoneyTypes] = useState([]);
     const [lossData, setLossData] = useState([]);
 
     const periodOptions = [
@@ -29,11 +30,14 @@ const LossReport = () => {
         { value: '2024', label: '2024' }
     ];
 
-    const honeyOptions = [
-        { value: 'silvestre', label: 'Silvestre' },
-        { value: 'eucalipto', label: 'Eucalipto' },
-        { value: 'laranjeira', label: 'Laranjeira' }
-    ];
+    // Carrega tipos de mel do localStorage
+    useEffect(() => {
+        const storedHoneyTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
+        setHoneyTypes(storedHoneyTypes);
+        if (storedHoneyTypes.length > 0) {
+            setTipoMel(storedHoneyTypes[0]);
+        }
+    }, []);
 
     // Mock data based on the image provided
     const getMockData = () => {
@@ -98,7 +102,10 @@ const LossReport = () => {
                         <div className="filter-col">
                             <label>Tipo de mel</label>
                             <CustomSelect
-                                options={honeyOptions}
+                                options={honeyTypes.map(type => ({
+                                    value: type,
+                                    label: type
+                                }))}
                                 value={tipoMel}
                                 onChange={setTipoMel}
                             />

@@ -7,6 +7,7 @@ import '../assets/css/HiveRegistration.css';
 import Navbar from '../components/Navbar';
 import ActionButtons from '../components/ActionButtons';
 import ToastCenter from '../components/Toast';
+import CustomSelect from '../components/CustomSelect';
 import CustomCalendar from '../components/CustomCalendar';
 
 const LossRegistration = () => {
@@ -14,12 +15,19 @@ const LossRegistration = () => {
     const [toast, setToast] = useState(null);
     const [showCalendar, setShowCalendar] = useState(false);
     const calendarRef = useRef(null);
-
+    const [honeyTypes, setHoneyTypes] = useState([]);
     const [formData, setFormData] = useState({
         volumePerdido: '',
         dataPerda: new Date(),
-        razaoMotivo: ''
+        razaoMotivo: '',
+        tipoMel: ''
     });
+
+    // Carrega tipos de mel do localStorage
+    useEffect(() => {
+        const storedHoneyTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
+        setHoneyTypes(storedHoneyTypes);
+    }, []);
 
     const showToast = (message, type) => {
         setToast({ message, type });
@@ -46,6 +54,15 @@ const LossRegistration = () => {
             const existingLosses = JSON.parse(localStorage.getItem('hf_losses') || '[]');
             const updatedLosses = [...existingLosses, newLoss];
             localStorage.setItem('hf_losses', JSON.stringify(updatedLosses));
+
+            // Salva novo tipo de mel se não existir
+            if (formData.tipoMel && formData.tipoMel.trim()) {
+                const existingTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
+                if (!existingTypes.includes(formData.tipoMel.trim())) {
+                    const updatedTypes = [...existingTypes, formData.tipoMel.trim()];
+                    localStorage.setItem('hf_honey_types', JSON.stringify(updatedTypes));
+                }
+            }
 
             showToast('Perda registrada com sucesso!', 'success');
 
@@ -77,7 +94,6 @@ const LossRegistration = () => {
     const formatDate = (date) => {
         return date.toLocaleDateString('pt-BR');
     };
-
     return (
         <div className="registration-page">
             <Navbar />
@@ -101,6 +117,19 @@ const LossRegistration = () => {
                                 placeholder="0.00"
                                 value={formData.volumePerdido}
                                 onChange={(e) => setFormData({ ...formData, volumePerdido: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="input-group">
+                            <label>Tipo de mel</label>
+                            <CustomSelect
+                                options={honeyTypes.map(type => ({
+                                    value: type,
+                                    label: type
+                                }))}
+                                value={formData.tipoMel}
+                                onChange={(val) => setFormData({ ...formData, tipoMel: val })}
+                                placeholder="Selecione o tipo de mel"
                             />
                         </div>
 

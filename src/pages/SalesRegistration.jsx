@@ -7,6 +7,7 @@ import '../assets/css/HiveRegistration.css';
 import Navbar from '../components/Navbar';
 import ActionButtons from '../components/ActionButtons';
 import ToastCenter from '../components/Toast';
+import CustomSelect from '../components/CustomSelect';
 import CustomCalendar from '../components/CustomCalendar';
 
 const SalesRegistration = () => {
@@ -14,12 +15,19 @@ const SalesRegistration = () => {
     const [toast, setToast] = useState(null);
     const [showCalendar, setShowCalendar] = useState(false);
     const calendarRef = useRef(null);
-
+    const [honeyTypes, setHoneyTypes] = useState([]);
     const [formData, setFormData] = useState({
         volumeVendido: '',
         valorTotal: '',
-        dataVenda: new Date()
+        dataVenda: new Date(),
+        tipoMel: ''
     });
+
+    // Carrega tipos de mel do localStorage
+    useEffect(() => {
+        const storedHoneyTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
+        setHoneyTypes(storedHoneyTypes);
+    }, []);
 
     const showToast = (message, type) => {
         setToast({ message, type });
@@ -46,6 +54,15 @@ const SalesRegistration = () => {
             const existingSales = JSON.parse(localStorage.getItem('hf_sales') || '[]');
             const updatedSales = [...existingSales, newSale];
             localStorage.setItem('hf_sales', JSON.stringify(updatedSales));
+
+            // Salva novo tipo de mel se não existir
+            if (formData.tipoMel && formData.tipoMel.trim()) {
+                const existingTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
+                if (!existingTypes.includes(formData.tipoMel.trim())) {
+                    const updatedTypes = [...existingTypes, formData.tipoMel.trim()];
+                    localStorage.setItem('hf_honey_types', JSON.stringify(updatedTypes));
+                }
+            }
 
             showToast('Venda registrada com sucesso!', 'success');
 
@@ -102,6 +119,19 @@ const SalesRegistration = () => {
                                 placeholder="0.00"
                                 value={formData.volumeVendido}
                                 onChange={(e) => setFormData({ ...formData, volumeVendido: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="input-group">
+                            <label>Tipo de mel</label>
+                            <CustomSelect
+                                options={honeyTypes.map(type => ({
+                                    value: type,
+                                    label: type
+                                }))}
+                                value={formData.tipoMel}
+                                onChange={(val) => setFormData({ ...formData, tipoMel: val })}
+                                placeholder="Selecione o tipo de mel"
                             />
                         </div>
 

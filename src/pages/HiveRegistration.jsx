@@ -91,18 +91,26 @@ const HiveRegistration = () => {
     const [toast, setToast] = useState(null);
     const [apiaries, setApiaries] = useState([]);
     const [selectedApiary, setSelectedApiary] = useState(null);
+    const [honeyTypes, setHoneyTypes] = useState([]);
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const [formData, setFormData] = useState({
         apiario: '',
         anoColmeia: '',
-        anoRainha: ''
+        anoRainha: '',
+        tipoMel: ''
     });
 
     const location = useLocation();
 
-    // Carrega apiários do localStorage
+    // Carrega apiários e tipos de mel do localStorage
     useEffect(() => {
         const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
         setApiaries(storedApiaries);
+
+        // Carrega tipos de mel salvos
+        const storedHoneyTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
+        setHoneyTypes(storedHoneyTypes);
 
         // Preenche o apiário se vier da navegação (após cadastro de apiário)
         if (location.state?.apiarioId) {
@@ -126,6 +134,28 @@ const HiveRegistration = () => {
 
     const handleLocationSelect = (lat, lng) => {
         setCoords({ lat: lat.toFixed(6), lng: lng.toFixed(6) });
+    };
+
+    // Handler para input de tipo de mel com autocomplete
+    const handleHoneyTypeChange = (value) => {
+        setFormData({ ...formData, tipoMel: value });
+
+        if (value.trim().length > 0) {
+            const filtered = honeyTypes.filter(type =>
+                type.toLowerCase().includes(value.toLowerCase())
+            );
+            setSuggestions(filtered);
+            setShowSuggestions(true);
+        } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+        }
+    };
+
+    // Seleciona uma sugestão
+    const handleSelectSuggestion = (type) => {
+        setFormData({ ...formData, tipoMel: type });
+        setShowSuggestions(false);
     };
 
     const handleBack = () => {
@@ -158,6 +188,15 @@ const HiveRegistration = () => {
             const existingHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
             const updatedHives = [...existingHives, newHive];
             localStorage.setItem('hf_hives', JSON.stringify(updatedHives));
+
+            // Salva novo tipo de mel se não existir
+            if (formData.tipoMel && formData.tipoMel.trim()) {
+                const existingTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
+                if (!existingTypes.includes(formData.tipoMel.trim())) {
+                    const updatedTypes = [...existingTypes, formData.tipoMel.trim()];
+                    localStorage.setItem('hf_honey_types', JSON.stringify(updatedTypes));
+                }
+            }
 
             showToast('Colmeia cadastrada com sucesso!', 'success');
 
@@ -220,6 +259,38 @@ const HiveRegistration = () => {
                                 value={formData.anoRainha}
                                 onChange={(e) => setFormData({ ...formData, anoRainha: e.target.value })}
                             />
+                        </div>
+
+                        <div className="input-group autocomplete-container">
+                            <label>Tipo de mel</label>
+                            <input
+                                type="text"
+                                placeholder="Digite ou selecione o tipo de mel"
+                                value={formData.tipoMel}
+                                onChange={(e) => handleHoneyTypeChange(e.target.value)}
+                                onFocus={() => {
+                                    if (formData.tipoMel.trim().length > 0) {
+                                        setShowSuggestions(true);
+                                    }
+                                }}
+                                onBlur={() => {
+                                    // Delay para permitir clique nas sugestões
+                                    setTimeout(() => setShowSuggestions(false), 200);
+                                }}
+                            />
+                            {showSuggestions && suggestions.length > 0 && (
+                                <div className="suggestions-dropdown">
+                                    {suggestions.map((type, index) => (
+                                        <div
+                                            key={index}
+                                            className="suggestion-item"
+                                            onClick={() => handleSelectSuggestion(type)}
+                                        >
+                                            {type}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 

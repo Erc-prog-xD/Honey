@@ -14,19 +14,24 @@ const ProductionRegistration = () => {
     const navigate = useNavigate();
     const [toast, setToast] = useState(null);
     const [apiaries, setApiaries] = useState([]);
+    const [honeyTypes, setHoneyTypes] = useState([]);
     const [showCalendar, setShowCalendar] = useState(false);
     const calendarRef = useRef(null);
 
     const [formData, setFormData] = useState({
         apiario: '',
         volumeLitros: '',
-        dataExtracao: new Date()
+        dataExtracao: new Date(),
+        tipoMel: ''
     });
 
-    // Carrega apiários do localStorage
+    // Carrega apiários e tipos de mel do localStorage
     useEffect(() => {
         const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
         setApiaries(storedApiaries);
+
+        const storedHoneyTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
+        setHoneyTypes(storedHoneyTypes);
     }, []);
 
     const showToast = (message, type) => {
@@ -126,6 +131,19 @@ const ProductionRegistration = () => {
                                 placeholder="0.00"
                                 value={formData.volumeLitros}
                                 onChange={(e) => setFormData({ ...formData, volumeLitros: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="input-group">
+                            <label>Tipo de mel</label>
+                            <CustomSelect
+                                options={honeyTypes.map(type => ({
+                                    value: type,
+                                    label: type
+                                }))}
+                                value={formData.tipoMel}
+                                onChange={(val) => setFormData({ ...formData, tipoMel: val })}
+                                placeholder="Selecione o tipo de mel"
                             />
                         </div>
 
