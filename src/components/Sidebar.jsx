@@ -33,7 +33,19 @@ const Sidebar = ({ onHiveSelect }) => {
         // Carrega apiários e colmeias do localStorage
         const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
         const storedHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
-        setApiaries(storedApiaries);
+
+        // RF20: Filtra apenas apiários que TÊM colmeias (ativas ou inativas)
+        const apiariesWithHives = storedApiaries.filter(apiary => {
+            const hasHives = storedHives.some(hive => String(hive.apiario) === String(apiary.id));
+            return hasHives;
+        });
+
+        // Se algum apiário foi removido, atualiza o localStorage
+        if (apiariesWithHives.length !== storedApiaries.length) {
+            localStorage.setItem('hf_apiaries', JSON.stringify(apiariesWithHives));
+        }
+
+        setApiaries(apiariesWithHives);
         setHives(storedHives);
     }, []);
 

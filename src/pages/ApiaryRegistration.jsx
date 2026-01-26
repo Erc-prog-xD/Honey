@@ -88,7 +88,9 @@ const ApiaryRegistration = () => {
             showToast('Apiário cadastrado com sucesso!', 'success');
 
             setTimeout(() => {
-                navigate('/dashboard');
+                navigate('/cadastro-colmeia', {
+                    state: { apiarioId: newApiary.id }
+                });
             }, 1500);
         } catch (error) {
             console.error("Error saving to localStorage:", error);

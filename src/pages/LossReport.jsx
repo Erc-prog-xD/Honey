@@ -127,12 +127,46 @@ const LossReport = () => {
 
                 <div className="loss-chart-container">
                     <ResponsiveContainer width="100%" height={400}>
-                        <BarChart data={lossData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="name" axisLine={true} tickLine={true} />
-                            <YAxis domain={[0, 10]} ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]} axisLine={true} tickLine={true} />
-                            <Tooltip />
-                            <Bar dataKey="valor" fill="#ff4d4d" radius={[0, 0, 0, 0]} barSize={60} />
+                        <BarChart data={lossData} margin={{ top: 20, right: 30, left: 70, bottom: 40 }}>
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="#E0E0E0"
+                                vertical={false}
+                            />
+                            <XAxis
+                                dataKey="name"
+                                axisLine={{ stroke: '#666', strokeWidth: 2 }}
+                                tickLine={{ stroke: '#666' }}
+                                tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
+                                dy={10}
+                                label={{ value: 'Mês', position: 'insideBottom', offset: -10, style: { fontSize: 14, fontWeight: 600, fill: '#333' } }}
+                            />
+                            <YAxis
+                                domain={[0, 10]}
+                                ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                                axisLine={{ stroke: '#666', strokeWidth: 2 }}
+                                tickLine={{ stroke: '#666' }}
+                                tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
+                                tickFormatter={(value) => `${value}L`}
+                                dx={-10}
+                                label={{ value: 'Volume (L)', angle: -90, position: 'outside', dx: -50, style: { fontSize: 14, fontWeight: 600, fill: '#333', textAnchor: 'middle' } }}
+                            />
+                            <Tooltip
+                                formatter={(value) => [`${value}L`, 'Perdas']}
+                                contentStyle={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}
+                                labelStyle={{ fontWeight: 600, color: '#333' }}
+                            />
+                            <Bar
+                                dataKey="valor"
+                                fill="#ff4d4d"
+                                radius={[6, 6, 0, 0]}
+                                maxBarSize={60}
+                            />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

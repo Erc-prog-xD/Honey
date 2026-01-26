@@ -218,7 +218,7 @@ const SalesReport = () => {
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart
                                 data={salesData}
-                                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                                margin={{ top: 20, right: 30, left: 70, bottom: 40 }}
                             >
                                 <CartesianGrid
                                     strokeDasharray="3 3"
@@ -231,13 +231,15 @@ const SalesReport = () => {
                                     tickLine={{ stroke: '#666' }}
                                     tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
                                     dy={10}
+                                    label={{ value: 'Mês', position: 'insideBottom', offset: -10, style: { fontSize: 14, fontWeight: 600, fill: '#333' } }}
                                 />
                                 <YAxis
                                     axisLine={{ stroke: '#666', strokeWidth: 2 }}
                                     tickLine={{ stroke: '#666' }}
                                     tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
-                                    tickFormatter={(value) => `R$ ${value}`}
+                                    tickFormatter={(value) => `${value}L`}
                                     dx={-10}
+                                    label={{ value: 'Volume (L)', angle: -90, position: 'outside', dx: -50, style: { fontSize: 14, fontWeight: 600, fill: '#333', textAnchor: 'middle' } }}
                                 />
                                 <Tooltip
                                     formatter={(value) => [`R$ ${value}`, 'Vendas']}
@@ -264,7 +266,7 @@ const SalesReport = () => {
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart
                                 data={priceData}
-                                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                                margin={{ top: 20, right: 30, left: 70, bottom: 40 }}
                             >
                                 <CartesianGrid
                                     strokeDasharray="3 3"
@@ -277,6 +279,7 @@ const SalesReport = () => {
                                     tickLine={{ stroke: '#666' }}
                                     tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
                                     dy={10}
+                                    label={{ value: 'Mês', position: 'insideBottom', offset: -10, style: { fontSize: 14, fontWeight: 600, fill: '#333' } }}
                                 />
                                 <YAxis
                                     axisLine={{ stroke: '#666', strokeWidth: 2 }}
@@ -284,6 +287,7 @@ const SalesReport = () => {
                                     tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
                                     tickFormatter={(value) => `R$ ${value}`}
                                     dx={-10}
+                                    label={{ value: 'Preço (R$/L)', angle: -90, position: 'outside', dx: -50, style: { fontSize: 14, fontWeight: 600, fill: '#333', textAnchor: 'middle' } }}
                                 />
                                 <Tooltip
                                     formatter={(value) => [`R$ ${value}/L`, 'Preço']}

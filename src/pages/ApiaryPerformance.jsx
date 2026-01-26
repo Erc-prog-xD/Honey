@@ -268,12 +268,6 @@ const ApiaryPerformance = () => {
                         Produção
                     </button>
                     <button
-                        className={`tab-btn ${activeTab === 'venda' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('venda')}
-                    >
-                        Venda
-                    </button>
-                    <button
                         className={`tab-btn ${activeTab === 'perda' ? 'active' : ''}`}
                         onClick={() => setActiveTab('perda')}
                     >
@@ -283,18 +277,46 @@ const ApiaryPerformance = () => {
 
                 <div className="chart-full">
                     <ResponsiveContainer width="100%" height={400}>
-                        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 70, bottom: 60 }}>
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="#E0E0E0"
+                                vertical={false}
+                            />
                             <XAxis
                                 dataKey="name"
                                 angle={-45}
                                 textAnchor="end"
                                 height={80}
-                                tick={{ fontSize: 12 }}
+                                tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
+                                axisLine={{ stroke: '#666', strokeWidth: 2 }}
+                                tickLine={{ stroke: '#666' }}
+                                label={{ value: 'Mês', position: 'insideBottom', offset: -55, style: { fontSize: 14, fontWeight: 600, fill: '#333' } }}
                             />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="valor" fill="#2ecc71" radius={[4, 4, 0, 0]} />
+                            <YAxis
+                                axisLine={{ stroke: '#666', strokeWidth: 2 }}
+                                tickLine={{ stroke: '#666' }}
+                                tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }}
+                                tickFormatter={(value) => `${value}L`}
+                                dx={-10}
+                                label={{ value: 'Volume (L)', angle: -90, position: 'outside', dx: -50, style: { fontSize: 14, fontWeight: 600, fill: '#333', textAnchor: 'middle' } }}
+                            />
+                            <Tooltip
+                                formatter={(value) => [`${value}L`, activeTab === 'producao' ? 'Produção' : activeTab === 'venda' ? 'Venda' : 'Perda']}
+                                contentStyle={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}
+                                labelStyle={{ fontWeight: 600, color: '#333' }}
+                            />
+                            <Bar
+                                dataKey="valor"
+                                fill="#2ecc71"
+                                radius={[6, 6, 0, 0]}
+                                maxBarSize={60}
+                            />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

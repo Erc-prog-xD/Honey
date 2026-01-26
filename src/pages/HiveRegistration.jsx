@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Polygon, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -69,11 +69,18 @@ const HiveRegistration = () => {
         anoRainha: ''
     });
 
+    const location = useLocation();
+
     // Carrega apiários do localStorage
     useEffect(() => {
         const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
         setApiaries(storedApiaries);
-    }, []);
+
+        // Preenche o apiário se vier da navegação (após cadastro de apiário)
+        if (location.state?.apiarioId) {
+            setFormData(prev => ({ ...prev, apiario: String(location.state.apiarioId) }));
+        }
+    }, [location.state]);
 
     // Atualiza o apiário selecionado quando muda a seleção
     useEffect(() => {
