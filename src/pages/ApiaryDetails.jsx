@@ -263,27 +263,24 @@ const ApiaryDetails = () => {
                                         </div>
 
                                         <div className="hive-actions">
-                                            <button
-                                                className={`icon-btn power ${hive.active === false ? 'off' : 'on'}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (hive.active !== false) {
-                                                        // Se estiver ativa e for desativar, redireciona para página de desativação
+                                            {hive.active !== false && (
+                                                <button
+                                                    className="icon-btn power on"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        // Redireciona para página de desativação
                                                         navigate('/desativar-colmeia', {
                                                             state: {
                                                                 apiarioId: apiary.id,
                                                                 colmeiaId: hive.id
                                                             }
                                                         });
-                                                    } else {
-                                                        // Se estiver inativa e for ativar, mantém lógica simples (toggle)
-                                                        handleToggleHive(hive.id);
-                                                    }
-                                                }}
-                                                title={hive.active === false ? 'Ativar' : 'Desativar'}
-                                            >
-                                                <Power size={16} />
-                                            </button>
+                                                    }}
+                                                    title="Desativar"
+                                                >
+                                                    <Power size={16} />
+                                                </button>
+                                            )}
                                             <button
                                                 className="icon-btn trash"
                                                 onClick={(e) => {
@@ -330,13 +327,15 @@ const ApiaryDetails = () => {
                                 </div>
 
                                 <div className="hive-panel-actions">
-                                    <button
-                                        className={`btn-action-panel ${selectedHive.active === false ? 'activate' : 'deactivate'}`}
-                                        onClick={handleModalToggleActive}
-                                    >
-                                        <Power size={16} />
-                                        {selectedHive.active === false ? 'Ativar' : 'Desativar'}
-                                    </button>
+                                    {selectedHive.active !== false && (
+                                        <button
+                                            className="btn-action-panel deactivate"
+                                            onClick={handleModalToggleActive}
+                                        >
+                                            <Power size={16} />
+                                            Desativar
+                                        </button>
+                                    )}
                                     <button className="btn-sair" onClick={() => setSelectedHive(null)}>
                                         <ArrowLeft size={16} />
                                         Voltar
