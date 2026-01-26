@@ -17,6 +17,7 @@ const HiveDeactivation = () => {
     const [hives, setHives] = useState([]);
     const [filteredHives, setFilteredHives] = useState([]);
     const [showCalendar, setShowCalendar] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const calendarRef = useRef(null);
 
     const [formData, setFormData] = useState({
@@ -54,12 +55,15 @@ const HiveDeactivation = () => {
         navigate('/dashboard');
     };
 
-    const handleSave = () => {
+    const handleInitialSave = () => {
         if (!formData.apiario || !formData.colmeia || !formData.razaoMotivo || !formData.dataDesativacao) {
             showToast('Por favor, preencha todos os campos.', 'error');
             return;
         }
+        setIsModalOpen(true);
+    };
 
+    const confirmDeactivation = () => {
         const newDeactivation = {
             id: Date.now(),
             ...formData,
@@ -72,6 +76,7 @@ const HiveDeactivation = () => {
             const updatedDeactivations = [...existingDeactivations, newDeactivation];
             localStorage.setItem('hf_deactivated_hives', JSON.stringify(updatedDeactivations));
 
+            setIsModalOpen(false);
             showToast('Colmeia desativada com sucesso!', 'success');
 
             setTimeout(() => {
@@ -80,6 +85,7 @@ const HiveDeactivation = () => {
         } catch (error) {
             console.error("Error saving to localStorage:", error);
             showToast('Erro ao salvar os dados. Tente novamente.', 'error');
+            setIsModalOpen(false);
         }
     };
 
@@ -113,7 +119,7 @@ const HiveDeactivation = () => {
                     <div className="title-box">
                         <h1>Desativar Colmeia</h1>
                     </div>
-                    <ActionButtons onCancel={handleBack} onSave={handleSave} />
+                    <ActionButtons onCancel={handleBack} onSave={handleInitialSave} />
                 </div>
 
                 <div className="reg-full-width">
@@ -179,6 +185,66 @@ const HiveDeactivation = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Confirmation Modal */}
+            {isModalOpen && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 2000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        padding: '24px',
+                        borderRadius: 'var(--hf-radius-md)',
+                        boxShadow: 'var(--hf-shadow-lg)',
+                        maxWidth: '400px',
+                        width: '90%',
+                        textAlign: 'center'
+                    }}>
+                        <h3 style={{ marginBottom: '16px', color: 'var(--hf-text-main)' }}>Confirmar Desativação</h3>
+                        <p style={{ marginBottom: '24px', color: 'var(--hf-text-secondary)' }}>
+                            Tem certeza que deseja desativar esta colmeia? Esta ação registrará o fim do ciclo produtivo dela.
+                        </p>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #ccc',
+                                    backgroundColor: 'white',
+                                    cursor: 'pointer',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmDeactivation}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    backgroundColor: 'var(--hf-primary)',
+                                    color: 'var(--hf-text-main)',
+                                    cursor: 'pointer',
+                                    fontWeight: '600'
+                                }}
+                            >
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Toast Notification */}
             {toast && (
