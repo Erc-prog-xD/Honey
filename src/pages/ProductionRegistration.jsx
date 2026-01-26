@@ -48,6 +48,15 @@ const ProductionRegistration = () => {
             return;
         }
 
+        // Verifica se o apiário tem colmeias
+        const storedHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
+        const apiaryHives = storedHives.filter(h => String(h.apiario) === String(formData.apiario));
+
+        if (apiaryHives.length === 0) {
+            showToast('Não é possível registrar produção para um apiário sem colmeias.', 'error');
+            return;
+        }
+
         const newProduction = {
             id: Date.now(),
             ...formData,
