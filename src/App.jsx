@@ -11,6 +11,7 @@ import LossRegistration from './pages/LossRegistration';
 import SalesReport from './pages/SalesReport';
 import ApiaryPerformance from './pages/ApiaryPerformance';
 import ApiaryDetails from './pages/ApiaryDetails';
+import LossReport from './pages/LossReport';
 
 import './assets/css/global.css';
 
@@ -28,6 +29,7 @@ function App() {
         <Route path="/registro-vendas" element={<SalesRegistration />} />
         <Route path="/registro-perdas" element={<LossRegistration />} />
         <Route path="/relatorio-vendas" element={<SalesReport />} />
+        <Route path="/relatorio-perdas" element={<LossReport />} />
         <Route path="/desempenho-apiario" element={<ApiaryPerformance />} />
         <Route path="/apiario/:id" element={<ApiaryDetails />} />
       </Routes>
