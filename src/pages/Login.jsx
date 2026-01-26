@@ -30,7 +30,16 @@ const Login = () => {
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
-    console.log('login', { loginEmail, loginPassword });
+
+    // Simulação de Login: Salva o usuário no localStorage para o ProtectedRoute validar
+    const mockUser = {
+      name: 'Vicente Neto',
+      email: loginEmail,
+      role: 'Administrador'
+    };
+
+    localStorage.setItem('user', JSON.stringify(mockUser));
+
     showToast('Login realizado com sucesso!', 'success');
     setTimeout(() => navigate('/dashboard'), 700);
   };
