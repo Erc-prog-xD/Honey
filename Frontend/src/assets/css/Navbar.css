@@ -1,0 +1,134 @@
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    background-color: var(--hf-secondary);
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar-logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-logo {
+    height: 40px;
+    width: auto;
+}
+
+.navbar-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #5a5a5a;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-action-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    color: #5a5a5a;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.navbar-action-btn:hover {
+    color: var(--hf-text-main);
+    background: var(--hf-primary);
+    gap: 8px;
+}
+
+.action-text {
+    max-width: 0;
+    opacity: 0;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.navbar-action-btn:hover .action-text {
+    max-width: 60px;
+    opacity: 1;
+}
+
+.navbar-logout-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    color: #5a5a5a;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.navbar-logout-btn:hover {
+    color: #d32f2f;
+    background: rgba(211, 47, 47, 0.1);
+    gap: 8px;
+}
+
+.logout-text {
+    max-width: 0;
+    opacity: 0;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.navbar-logout-btn:hover .logout-text {
+    max-width: 50px;
+    opacity: 1;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ffbd59;
+    text-shadow: 1px 1px 0 #d97706;
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        height: 50px;
+    }
+
+    .navbar-logo {
+        height: 30px;
+    }
+
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .navbar-title {
+        font-size: 0.85rem;
+    }
+}

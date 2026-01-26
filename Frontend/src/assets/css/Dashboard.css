@@ -1,0 +1,246 @@
+.dashboard-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: var(--hf-white);
+    overflow: hidden;
+    /* Evita scroll na estrutura principal */
+}
+
+/* --- Top Section --- */
+.top-section {
+    display: flex;
+    min-height: 150px;
+    border-bottom: 4px solid var(--hf-border-color);
+}
+
+.sidebar-wrapper {
+    width: 250px;
+    flex-shrink: 0;
+    height: 100%;
+}
+
+.map-wrapper {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    background-color: #f0f0f0;
+}
+
+/* Estilos do mapa via CSS (removido inline) */
+.map-area-container {
+    width: 100%;
+    height: 100%;
+    min-height: 350px;
+    position: relative;
+    overflow: hidden;
+}
+
+.map-leaflet {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.map-add-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background-color: var(--hf-primary);
+    color: var(--hf-white);
+    font-size: 24px;
+    border: none;
+    border-radius: var(--hf-radius-sm);
+    cursor: pointer;
+    z-index: 1000;
+    box-shadow: var(--hf-shadow-sm);
+}
+
+/* --- Bottom Section --- */
+.bottom-section {
+    flex: 1;
+    padding: 30px;
+    background-color: var(--hf-bg-main);
+    background-image: url('../img/fundo-abelha.svg');
+    background-repeat: repeat;
+    overflow-y: auto;
+}
+
+.dashboard-brand-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    padding: 0 20px;
+}
+
+.brand-logo-large {
+    height: 100px;
+    width: auto;
+}
+
+.brand-title-large {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--hf-primary);
+    letter-spacing: -2px;
+}
+
+.section-container {
+    margin-bottom: 40px;
+}
+
+.section-divider {
+    background-color: var(--hf-primary);
+    color: var(--hf-white);
+    padding: 8px 25px;
+    border-radius: 12px 12px 0 0;
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 25px;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .dashboard-layout {
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+    }
+
+    .top-section {
+        flex-direction: column;
+        height: auto;
+        flex: none;
+        border-bottom: none;
+        position: relative;
+    }
+
+    .sidebar-wrapper {
+        width: 0;
+        height: 0;
+        min-height: 0;
+        max-height: 0;
+        flex: none;
+        border-bottom: none;
+        overflow: visible;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1001;
+    }
+
+    .map-wrapper {
+        width: 100%;
+        height: 280px;
+        min-height: 280px;
+        flex: none;
+        display: block;
+        border-bottom: 4px solid var(--hf-border-color);
+    }
+
+    .map-area-container {
+        min-height: auto;
+    }
+
+    .bottom-section {
+        padding: 20px 15px;
+        flex: none;
+        overflow-y: visible;
+    }
+
+    .honey-stock-card {
+        display: none;
+    }
+
+    .honey-stock-label {
+        font-size: 14px;
+    }
+
+    .honey-stock-value {
+        font-size: 28px;
+    }
+
+    .section-container {
+        margin-bottom: 25px;
+    }
+
+    .section-divider {
+        padding: 6px 15px;
+        font-size: 13px;
+        margin-bottom: 15px;
+    }
+
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+}
+
+/* Responsivo para telas muito pequenas */
+@media (max-width: 480px) {
+    .sidebar-wrapper {
+        min-height: 45px;
+        max-height: 55px;
+    }
+
+    .map-wrapper {
+        height: 280px;
+        min-height: 280px;
+    }
+
+    .bottom-section {
+        padding: 15px 10px;
+    }
+
+    .honey-stock-card {
+        display: none;
+    }
+
+    .honey-stock-label {
+        font-size: 12px;
+    }
+
+    .honey-stock-value {
+        font-size: 22px;
+    }
+
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .section-divider {
+        padding: 5px 12px;
+        font-size: 12px;
+        margin-bottom: 12px;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .map-add-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+        bottom: 15px;
+        right: 15px;
+    }
+}

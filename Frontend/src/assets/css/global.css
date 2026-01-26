@@ -1,0 +1,104 @@
+/* 
+======================================================
+FUNÇÃO DO CSS
+======================================================
+
+- Para uma organização melhor do código, foi criado um css global que contém as cores, fontes, efeitos, etc.
+- Com intuito de facilitar a manutenção e a consistência do design.
+- Tudo que alterar aqui afetará todos os componentes que usam essas variáveis.
+- Tomem cuidado ao alterar.
+
+> ATENÇÃO: ele contem também a padrão da pagina para facilitar a criação de componentes.
+======================================================
+
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+  /* Cores */
+  --hf-primary: #ffbd59;
+  --hf-primary-dark: #d97706;
+  --hf-primary-hover: #ffbb58;
+  --hf-secondary: #FFE08B;
+  --hf-success: #3ef08e;
+  --hf-bg-main: #fffbe6;
+  --hf-bg-card: #fffbd5;
+  --hf-bg-modal: #ffffff;
+  --hf-white: #ffffff;
+  --hf-input-bg: #eeeeee;
+
+  /* Textos */
+  --hf-text-main: #111111;
+  --hf-text-muted: #666666;
+  --hf-text-on-primary: #ffffff;
+
+  /* Efeitos */
+  --hf-border-color: #ffbd59;
+  --hf-shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.1);
+  --hf-shadow-md: 0 8px 20px rgba(0, 0, 0, 0.12);
+  --hf-shadow-btn: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+  /* Bordas */
+  --hf-radius-sm: 8px;
+  --hf-radius-md: 12px;
+  --hf-radius-lg: 28px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+body,
+html {
+  width: 100%;
+  height: 100%;
+}
+
+a {
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* ================================
+   Scrollbar Personalizada
+   ================================ */
+
+/* Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--hf-bg-main);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--hf-primary) 0%, var(--hf-primary-dark) 100%);
+  border-radius: 10px;
+  border: 2px solid var(--hf-bg-main);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--hf-primary-hover) 0%, var(--hf-primary) 100%);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hf-primary) var(--hf-bg-main);
+}
+
+.required-star {
+  color: #d32f2f;
+  margin-left: 2px;
+  font-weight: bold;
+}

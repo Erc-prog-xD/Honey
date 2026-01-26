@@ -1,0 +1,39 @@
+services:
+  api:
+    build:
+      context: ./BackendApi
+      dockerfile: Dockerfile
+    container_name: HoneyFlorAPI
+    ports:
+      - "8080:80"
+    depends_on:
+        sqlserver:
+         condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Honey_flow_DB;User Id=sa;Password=HoneyFlor@123;TrustServerCertificate=True;
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: HoneyFlorFrontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: Honey_flow_DB
+    environment:
+      SA_PASSWORD: "HoneyFlor@123"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    healthcheck:               
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "HoneyFlor@123", "-Q", "SELECT 1", "-C"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

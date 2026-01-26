@@ -1,0 +1,30 @@
+.dashboard-card {
+    background-color: var(--hf-bg-card);
+    border: 1px solid var(--hf-border-color);
+    border-radius: var(--hf-radius-sm);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 140px;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--hf-shadow-md);
+    background-color: var(--hf-primary-hover);
+}
+
+.card-icon-wrapper {
+    color: #000;
+}
+
+.card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
