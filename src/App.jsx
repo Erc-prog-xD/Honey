@@ -8,6 +8,7 @@ import ApiaryRegistration from './pages/ApiaryRegistration';
 import ProductionRegistration from './pages/ProductionRegistration';
 import SalesRegistration from './pages/SalesRegistration';
 import LossRegistration from './pages/LossRegistration';
+import HiveDeactivation from './pages/HiveDeactivation';
 import SalesReport from './pages/SalesReport';
 import ApiaryPerformance from './pages/ApiaryPerformance';
 import ApiaryDetails from './pages/ApiaryDetails';
@@ -28,6 +29,7 @@ function App() {
         <Route path="/registro-producao" element={<ProductionRegistration />} />
         <Route path="/registro-vendas" element={<SalesRegistration />} />
         <Route path="/registro-perdas" element={<LossRegistration />} />
+        <Route path="/desativar-colmeia" element={<HiveDeactivation />} />
         <Route path="/relatorio-vendas" element={<SalesReport />} />
         <Route path="/relatorio-perdas" element={<LossReport />} />
         <Route path="/desempenho-apiario" element={<ApiaryPerformance />} />
