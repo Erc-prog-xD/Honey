@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import '../assets/css/HiveRegistration.css';
 
 // Components
 import Navbar from '../components/Navbar';
 import ActionButtons from '../components/ActionButtons';
 import ToastCenter from '../components/Toast';
+import CustomCalendar from '../components/CustomCalendar';
 
 const SalesRegistration = () => {
     const navigate = useNavigate();
     const [toast, setToast] = useState(null);
+    const [showCalendar, setShowCalendar] = useState(false);
+    const calendarRef = useRef(null);
+
     const [formData, setFormData] = useState({
         volumeVendido: '',
-        valorTotal: ''
+        valorTotal: '',
+        dataVenda: new Date()
     });
 
     const showToast = (message, type) => {
@@ -24,7 +30,7 @@ const SalesRegistration = () => {
     };
 
     const handleSave = () => {
-        if (!formData.volumeVendido || !formData.valorTotal) {
+        if (!formData.volumeVendido || !formData.valorTotal || !formData.dataVenda) {
             showToast('Por favor, preencha todos os campos.', 'error');
             return;
         }
@@ -32,6 +38,7 @@ const SalesRegistration = () => {
         const newSale = {
             id: Date.now(),
             ...formData,
+            dataVenda: formData.dataVenda instanceof Date ? formData.dataVenda.toISOString() : formData.dataVenda,
             createdAt: new Date().toISOString()
         };
 
@@ -51,6 +58,27 @@ const SalesRegistration = () => {
         }
     };
 
+    const handleDateChange = (date) => {
+        setFormData({ ...formData, dataVenda: date });
+        setShowCalendar(false);
+    };
+
+    // Close calendar on click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+                setShowCalendar(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const formatDate = (date) => {
+        if (!(date instanceof Date)) return date;
+        return date.toLocaleDateString('pt-BR');
+    };
+
     return (
         <div className="registration-page">
             <Navbar />
@@ -68,24 +96,44 @@ const SalesRegistration = () => {
                         <h2>Informações gerais</h2>
 
                         <div className="input-group">
-                            <label>Volume vendido</label>
+                            <label>Volume vendido (L)</label>
                             <input
                                 type="number"
-                                placeholder=""
+                                placeholder="0.00"
                                 value={formData.volumeVendido}
                                 onChange={(e) => setFormData({ ...formData, volumeVendido: e.target.value })}
                             />
                         </div>
 
                         <div className="input-group">
-                            <label>Valor total da venda</label>
+                            <label>Valor total da venda (R$)</label>
                             <input
                                 type="number"
                                 step="0.01"
-                                placeholder=""
+                                placeholder="0.00"
                                 value={formData.valorTotal}
                                 onChange={(e) => setFormData({ ...formData, valorTotal: e.target.value })}
                             />
+                        </div>
+
+                        <div className="input-group" style={{ position: 'relative' }} ref={calendarRef}>
+                            <label>Data da venda</label>
+                            <div
+                                className="datepicker-trigger"
+                                onClick={() => setShowCalendar(!showCalendar)}
+                            >
+                                <span>{formatDate(formData.dataVenda)}</span>
+                                <CalendarIcon size={20} color="var(--hf-primary-dark)" />
+                            </div>
+
+                            {showCalendar && (
+                                <div className="datepicker-popup">
+                                    <CustomCalendar
+                                        value={formData.dataVenda}
+                                        onChange={handleDateChange}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

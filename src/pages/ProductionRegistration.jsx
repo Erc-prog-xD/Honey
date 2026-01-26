@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import '../assets/css/HiveRegistration.css';
 
 // Components
@@ -7,15 +8,19 @@ import Navbar from '../components/Navbar';
 import ActionButtons from '../components/ActionButtons';
 import ToastCenter from '../components/Toast';
 import CustomSelect from '../components/CustomSelect';
+import CustomCalendar from '../components/CustomCalendar';
 
 const ProductionRegistration = () => {
     const navigate = useNavigate();
     const [toast, setToast] = useState(null);
     const [apiaries, setApiaries] = useState([]);
+    const [showCalendar, setShowCalendar] = useState(false);
+    const calendarRef = useRef(null);
+
     const [formData, setFormData] = useState({
         apiario: '',
         volumeLitros: '',
-        dataExtracao: ''
+        dataExtracao: new Date()
     });
 
     // Carrega apiários do localStorage
@@ -41,6 +46,7 @@ const ProductionRegistration = () => {
         const newProduction = {
             id: Date.now(),
             ...formData,
+            dataExtracao: formData.dataExtracao instanceof Date ? formData.dataExtracao.toISOString() : formData.dataExtracao,
             createdAt: new Date().toISOString()
         };
 
@@ -58,6 +64,27 @@ const ProductionRegistration = () => {
             console.error("Error saving to localStorage:", error);
             showToast('Erro ao salvar os dados. Tente novamente.', 'error');
         }
+    };
+
+    const handleDateChange = (date) => {
+        setFormData({ ...formData, dataExtracao: date });
+        setShowCalendar(false);
+    };
+
+    // Close calendar on click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+                setShowCalendar(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const formatDate = (date) => {
+        if (!(date instanceof Date)) return date;
+        return date.toLocaleDateString('pt-BR');
     };
 
     return (
@@ -96,19 +123,30 @@ const ProductionRegistration = () => {
                             <label>Volume total (Litros)</label>
                             <input
                                 type="number"
-                                placeholder=""
+                                placeholder="0.00"
                                 value={formData.volumeLitros}
                                 onChange={(e) => setFormData({ ...formData, volumeLitros: e.target.value })}
                             />
                         </div>
 
-                        <div className="input-group">
+                        <div className="input-group" style={{ position: 'relative' }} ref={calendarRef}>
                             <label>Data da extração</label>
-                            <input
-                                type="date"
-                                value={formData.dataExtracao}
-                                onChange={(e) => setFormData({ ...formData, dataExtracao: e.target.value })}
-                            />
+                            <div
+                                className="datepicker-trigger"
+                                onClick={() => setShowCalendar(!showCalendar)}
+                            >
+                                <span>{formatDate(formData.dataExtracao)}</span>
+                                <CalendarIcon size={20} color="var(--hf-primary-dark)" />
+                            </div>
+
+                            {showCalendar && (
+                                <div className="datepicker-popup">
+                                    <CustomCalendar
+                                        value={formData.dataExtracao}
+                                        onChange={handleDateChange}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
