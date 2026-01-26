@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import '../assets/css/Navbar.css';
 import logo from '../assets/img/logo-hf-lateral.svg';
 import LogoutModal from './LogoutModal';
@@ -31,10 +31,16 @@ const Navbar = () => {
                 <div className="navbar-logo-container">
                     <img src={logo} alt="HoneyFlow Logo" className="navbar-logo" />
                 </div>
-                <button className="navbar-logout-btn" onClick={handleLogoutClick}>
-                    <LogOut size={20} />
-                    <span className="logout-text">Sair</span>
-                </button>
+                <div className="navbar-actions">
+                    <button className="navbar-action-btn" onClick={() => navigate('/perfil')}>
+                        <User size={20} />
+                        <span className="action-text">Perfil</span>
+                    </button>
+                    <button className="navbar-logout-btn" onClick={handleLogoutClick}>
+                        <LogOut size={20} />
+                        <span className="logout-text">Sair</span>
+                    </button>
+                </div>
             </nav>
             <LogoutModal
                 isOpen={showLogoutModal}

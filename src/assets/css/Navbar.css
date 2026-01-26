@@ -30,9 +30,46 @@
     gap: 5px;
 }
 
-.navbar-version {
-    font-size: 0.8rem;
-    color: #888;
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-action-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    color: #5a5a5a;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.navbar-action-btn:hover {
+    color: var(--hf-text-main);
+    background: var(--hf-primary);
+    gap: 8px;
+}
+
+.action-text {
+    max-width: 0;
+    opacity: 0;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.navbar-action-btn:hover .action-text {
+    max-width: 60px;
+    opacity: 1;
 }
 
 .navbar-logout-btn {

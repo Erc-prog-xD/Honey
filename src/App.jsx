@@ -13,6 +13,7 @@ import SalesReport from './pages/SalesReport';
 import ApiaryPerformance from './pages/ApiaryPerformance';
 import ApiaryDetails from './pages/ApiaryDetails';
 import LossReport from './pages/LossReport';
+import UserProfile from './pages/UserProfile';
 
 import './assets/css/global.css';
 
@@ -34,6 +35,7 @@ function App() {
         <Route path="/relatorio-perdas" element={<LossReport />} />
         <Route path="/desempenho-apiario" element={<ApiaryPerformance />} />
         <Route path="/apiario/:id" element={<ApiaryDetails />} />
+        <Route path="/perfil" element={<UserProfile />} />
       </Routes>
     </Router>
   );
