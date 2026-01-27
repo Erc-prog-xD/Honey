@@ -10,7 +10,7 @@
 /* --- Top Section --- */
 .top-section {
     display: flex;
-    min-height: 150px;
+    height: 450px;
     border-bottom: 4px solid var(--hf-border-color);
 }
 
