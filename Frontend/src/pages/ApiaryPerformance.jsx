@@ -22,6 +22,11 @@ const ApiaryPerformance = () => {
         venda: 0
     });
 
+    const [period, setPeriod] = useState('Anual');
+    const [year, setYear] = useState(new Date().getFullYear().toString());
+    const [month, setMonth] = useState((new Date().getMonth() + 1).toString());
+    const [category, setCategory] = useState('producao'); // 'producao', 'produtividade', 'financeiro'
+
     // Carrega apiários da API
     useEffect(() => {
         const loadApiaries = async () => {
@@ -50,9 +55,22 @@ const ApiaryPerformance = () => {
         const loadProduction = async () => {
             try {
                 setLoading(true);
-                // Sem endpoint disponível, exibir apenas cards vazios com mensagem
-                setTotals({ producao: 0, estoque: 0, venda: 0 });
-                setChartData([]);
+                const data = await buscarProducaoDoApiario(selectedApiary);
+
+                // Atualiza os cards com dados REAIS da API
+                const realTotals = {
+                    producao: data?.totalProduzidoKg || 0,
+                    estoque: data?.estoqueAtualKg || 0,
+                    venda: data?.totalVendido || 0
+                };
+                setTotals(realTotals);
+
+                // Como a API não tem histórico, mostramos o Total Consolidado no gráfico
+                // para manter o visual funcional sem dados fake
+                setChartData([
+                    { name: 'Total', valor: realTotals.producao }
+                ]);
+
             } catch (error) {
                 console.warn("Erro ao buscar produção:", error);
                 setTotals({ producao: 0, estoque: 0, venda: 0 });
@@ -63,9 +81,7 @@ const ApiaryPerformance = () => {
         };
 
         loadProduction();
-    }, [selectedApiary]);
-
-
+    }, [selectedApiary, period, year, month, category]); // Recarrega se filtros mudarem (mesmo que API não suporte ainda, mantém a UX)
 
     const handleBack = () => {
         navigate('/dashboard');
@@ -75,8 +91,32 @@ const ApiaryPerformance = () => {
         ? apiaries.map(ap => ({ value: String(ap.id), label: ap.nomeApelido }))
         : [{ value: '', label: 'Apiário 1' }];
 
-    // Calcula o total do período para exibição
-    const totalPeriodo = chartData.reduce((acc, item) => acc + (item.valor || 0), 0);
+    // Opções de filtros visuais (apenas UI por enquanto)
+    const periodOptions = [
+        { value: 'Anual', label: 'Anual' },
+        { value: 'Mensal', label: 'Mensal' }
+    ];
+
+    const yearOptions = [
+        { value: '2025', label: '2025' },
+        { value: '2024', label: '2024' },
+        { value: '2023', label: '2023' }
+    ];
+
+    const monthOptions = [
+        { value: '1', label: 'Janeiro' },
+        { value: '2', label: 'Fevereiro' },
+        { value: '3', label: 'Março' },
+        { value: '4', label: 'Abril' },
+        { value: '5', label: 'Maio' },
+        { value: '6', label: 'Junho' },
+        { value: '7', label: 'Julho' },
+        { value: '8', label: 'Agosto' },
+        { value: '9', label: 'Setembro' },
+        { value: '10', label: 'Outubro' },
+        { value: '11', label: 'Novembro' },
+        { value: '12', label: 'Dezembro' }
+    ];
 
     return (
         <div className="registration-page">
@@ -106,11 +146,54 @@ const ApiaryPerformance = () => {
                                 placeholder="Selecione o apiário"
                             />
                         </div>
+                        <div className="filter-group">
+                            <label>Período</label>
+                            <CustomSelect
+                                options={periodOptions}
+                                value={period}
+                                onChange={setPeriod}
+                            />
+                        </div>
+                        <div className="filter-group">
+                            <label>Ano</label>
+                            <CustomSelect
+                                options={yearOptions}
+                                value={year}
+                                onChange={setYear}
+                            />
+                        </div>
+                        {period === 'Mensal' && (
+                            <div className="filter-group">
+                                <label>Mês</label>
+                                <CustomSelect
+                                    options={monthOptions}
+                                    value={month}
+                                    onChange={setMonth}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                <div className="category-tabs" style={{ marginBottom: '30px' }}>
-                    <span style={{ fontSize: '18px', fontWeight: '600', color: '#333' }}>Resumo de Produção</span>
+                <div className="category-tabs">
+                    <button
+                        className={`tab-btn ${category === 'producao' ? 'active' : ''}`}
+                        onClick={() => setCategory('producao')}
+                    >
+                        Produção
+                    </button>
+                    <button
+                        className={`tab-btn ${category === 'produtividade' ? 'active' : ''}`}
+                        onClick={() => setCategory('produtividade')}
+                    >
+                        Produtividade
+                    </button>
+                    <button
+                        className={`tab-btn ${category === 'financeiro' ? 'active' : ''}`}
+                        onClick={() => setCategory('financeiro')}
+                    >
+                        Financeiro
+                    </button>
                 </div>
 
                 {/* Card de Totalização */}
@@ -185,9 +268,9 @@ const ApiaryPerformance = () => {
                             />
                         </BarChart>
                     </ResponsiveContainer>
-                </div>
-            </main>
-        </div>
+                </div >
+            </main >
+        </div >
     );
 };
 
