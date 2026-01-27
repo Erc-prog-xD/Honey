@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { criarApiario, buscarApiarios } from '../services/apiarioService';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, FeatureGroup, Polygon, Popup, useMap } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
@@ -35,10 +36,45 @@ const ApiaryRegistration = () => {
         tipoAbelha: ''
     });
 
-    // Carrega apiários existentes do localStorage
+    // Carrega apiários existentes da API
     useEffect(() => {
-        const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
-        setExistingApiaries(storedApiaries);
+        const loadApiaries = async () => {
+            try {
+                let data = await buscarApiarios();
+                // Tratamento do wrapper 'dados'
+                if (data && !Array.isArray(data) && Array.isArray(data.dados)) {
+                    data = data.dados;
+                }
+
+                const safeData = Array.isArray(data) ? data : [];
+
+                // Mapeia para adicionar polígono visual se tiver coordenadas
+                const mappedApiaries = safeData.map(api => {
+                    let polygon = [];
+                    // Como a API só retorna ponto central, criamos um quadrado padrão para visualização
+                    if (api.coord_X && api.coord_Y) {
+                        const lat = parseFloat(api.coord_Y);
+                        const lng = parseFloat(api.coord_X);
+                        // Verifica se são números válidos
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            polygon = [
+                                { lat: lat + 0.001, lng: lng - 0.001 },
+                                { lat: lat + 0.001, lng: lng + 0.001 },
+                                { lat: lat - 0.001, lng: lng + 0.001 },
+                                { lat: lat - 0.001, lng: lng - 0.001 }
+                            ];
+                        }
+                    }
+
+                    return { ...api, polygon };
+                });
+
+                setExistingApiaries(mappedApiaries);
+            } catch (error) {
+                console.error("Erro ao carregar apiários:", error);
+            }
+        };
+        loadApiaries();
     }, []);
 
     const showToast = (message, type) => {
@@ -62,7 +98,9 @@ const ApiaryRegistration = () => {
         setPolygonCoords([]);
     };
 
-    const handleSave = () => {
+    // ... (restante dos imports)
+
+    const handleSave = async () => {
         if (!formData.nomeApelido || !formData.tipoAbelha) {
             showToast('Por favor, preencha o nome e o tipo de abelha.', 'error');
             return;
@@ -73,28 +111,51 @@ const ApiaryRegistration = () => {
             return;
         }
 
-        const newApiary = {
-            id: Date.now(),
-            ...formData,
-            polygon: polygonCoords,
-            createdAt: new Date().toISOString()
+        // Calcula o centro do polígono para enviar como coordenada principal
+        const latTotal = polygonCoords.reduce((sum, p) => sum + p.lat, 0);
+        const lngTotal = polygonCoords.reduce((sum, p) => sum + p.lng, 0);
+        const centerLat = latTotal / polygonCoords.length;
+        const centerLng = lngTotal / polygonCoords.length;
+
+        // Prepara o payload conforme especificação da API
+        const apiPayload = {
+            localizacao: {
+                rua: "Não informado", // Valores padrão ou adicionar campos futuros
+                bairro: "Não informado",
+                cidade: "Não informado",
+                estado: "NI",
+                descricaoLocal: formData.nomeApelido, // Usando o nome/apelido como descrição
+                referencia: "Coordenadas do mapa"
+            },
+            coord_X: centerLng.toString(), // Longitude como X
+            coord_Y: centerLat.toString(), // Latitude como Y
+            bioma: "Não informado", // Campo obrigatório na API
+            tipoDeAbelha: formData.tipoAbelha,
+            tipoDeMel: "Não informado", // Evita string vazia
+            atividade: 1 // 1 para Ativo (conforme enum provável)
         };
 
+        console.log("Payload CriarApiario:", apiPayload);
+
         try {
-            const existingApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
-            const updatedApiaries = [...existingApiaries, newApiary];
-            localStorage.setItem('hf_apiaries', JSON.stringify(updatedApiaries));
+            const response = await criarApiario(apiPayload);
 
             showToast('Apiário cadastrado com sucesso!', 'success');
 
+            // Redireciona para o dashboard ou cadastro de colmeia
+            // O desenho não é salvo na API, apenas as coordenadas centrais serão usadas na listagem
             setTimeout(() => {
+                // Redireciona passando o ID retornado pela API
                 navigate('/cadastro-colmeia', {
-                    state: { apiarioId: newApiary.id }
+                    state: { apiarioId: response.id }
                 });
             }, 1500);
+
+
+
         } catch (error) {
-            console.error("Error saving to localStorage:", error);
-            showToast('Erro ao salvar os dados. Tente novamente.', 'error');
+            console.error("Erro ao salvar apiário:", error);
+            showToast('Erro ao salvar os dados. Verifique a conexão.', 'error');
         }
     };
 

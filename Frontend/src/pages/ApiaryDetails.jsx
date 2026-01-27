@@ -5,6 +5,7 @@ import L from 'leaflet';
 import { Trash2, Pencil, Power, ArrowLeft, Bug, Droplets, Calendar, MapPin, Hexagon, Plus } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import '../assets/css/ApiaryDetails.css';
+import { buscarApiarios, editarApiario, buscarColmeiasDoApiario } from '../services/apiarioService';
 
 // Components e Assets
 import Navbar from '../components/Navbar';
@@ -24,6 +25,15 @@ const ApiaryDetails = () => {
     const [toast, setToast] = useState(null);
     const [selectedHive, setSelectedHive] = useState(null);
     const [honeyTypes, setHoneyTypes] = useState([]);
+    const [formData, setFormData] = useState({
+        nomeApelido: '',
+        tipoAbelha: '',
+        volumeProduzido: '',
+        tipoMel: ''
+    });
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+
+    const showToast = (message, type) => setToast({ message, type });
 
     const handleHiveClick = (hive) => {
         setSelectedHive(hive);
@@ -35,108 +45,98 @@ const ApiaryDetails = () => {
 
     const handleModalToggleActive = () => {
         if (selectedHive) {
-            if (selectedHive.active !== false) {
-                // Se estiver ativa e for desativar, redireciona para página de desativação
-                navigate('/desativar-colmeia', {
-                    state: {
-                        apiarioId: apiary.id,
-                        colmeiaId: selectedHive.id
-                    }
-                });
-            } else {
-                // Se estiver inativa e for ativar, mantém lógica simples (toggle)
-                handleToggleHive(selectedHive.id);
-                setSelectedHive(prev => ({ ...prev, active: !prev.active }));
-            }
+            // Lógica simplificada de toggle por enquanto, já que o foco é Apiário
+            handleToggleHive(selectedHive.id);
+            setSelectedHive(prev => ({ ...prev, active: !prev.active }));
         }
     };
-
-    const [formData, setFormData] = useState({
-        nomeApelido: '',
-        tipoAbelha: '',
-        volumeProduzido: '',
-        tipoMel: ''
-    });
-
-    const [isEditingTitle, setIsEditingTitle] = useState(false);
 
     useEffect(() => {
-        // Carrega dados do localStorage ou usa mock
-        const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
-        const foundApiary = storedApiaries.find(a => String(a.id) === String(id));
+        const loadData = async () => {
+            try {
+                // 1. Buscar Apiário
+                let apiarios = await buscarApiarios();
+                if (apiarios && !Array.isArray(apiarios) && Array.isArray(apiarios.dados)) {
+                    apiarios = apiarios.dados;
+                }
 
-        if (foundApiary) {
-            setApiary(foundApiary);
-            setFormData({
-                nomeApelido: foundApiary.nomeApelido || 'Apiário 1',
-                tipoAbelha: foundApiary.tipoAbelha || 'Apis mellifera',
-                volumeProduzido: foundApiary.volumeProduzido || '450',
-                tipoMel: foundApiary.tipoMel || ''
-            });
-        } else {
-            // Dados mockados para demonstração
-            setApiary({
-                id: id,
-                nomeApelido: 'Apiário Principal',
-                tipoAbelha: 'Apis mellifera',
-                polygon: [],
-                createdAt: '2024-03-15'
-            });
-            setFormData({
-                nomeApelido: 'Apiário Principal',
-                tipoAbelha: 'Apis mellifera',
-                volumeProduzido: '450',
-                tipoMel: ''
-            });
-        }
+                const foundApiary = (Array.isArray(apiarios) ? apiarios : []).find(a => String(a.id) === String(id));
 
-        // Carrega tipos de mel
-        const storedHoneyTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
-        setHoneyTypes(storedHoneyTypes);
+                if (foundApiary) {
+                    setApiary({
+                        ...foundApiary,
+                        // Mapeia campos da API para o state local se necessário
+                        nomeApelido: foundApiary.localizacao?.descricaoLocal || 'Apiário Sem Nome',
+                        tipoAbelha: foundApiary.tipoDeAbelha,
+                        // Gera polígono padrão baseado nas coordenadas
+                        polygon: (foundApiary.coord_X && foundApiary.coord_Y) ? [
+                            { lat: parseFloat(foundApiary.coord_Y) + 0.001, lng: parseFloat(foundApiary.coord_X) - 0.001 },
+                            { lat: parseFloat(foundApiary.coord_Y) + 0.001, lng: parseFloat(foundApiary.coord_X) + 0.001 },
+                            { lat: parseFloat(foundApiary.coord_Y) - 0.001, lng: parseFloat(foundApiary.coord_X) + 0.001 },
+                            { lat: parseFloat(foundApiary.coord_Y) - 0.001, lng: parseFloat(foundApiary.coord_X) - 0.001 }
+                        ] : []
+                    });
 
-        // Carrega colmeias do apiário
-        const storedHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
-        const apiaryHives = storedHives.filter(h => String(h.apiario) === String(id));
+                    setFormData({
+                        nomeApelido: foundApiary.localizacao?.descricaoLocal || '',
+                        tipoAbelha: foundApiary.tipoDeAbelha || '',
+                        volumeProduzido: '0', // API não retornou produção no exemplo
+                        tipoMel: foundApiary.tipoDeMel || ''
+                    });
+                }
 
-        if (apiaryHives.length > 0) {
-            setHives(apiaryHives);
-        } else {
-            // Dados mockados
-            setHives([
-                { id: '1', anoColmeia: '2023', anoRainha: '2024', active: true },
-                { id: '2', anoColmeia: '2022', anoRainha: '2023', active: true },
-                { id: '3', anoColmeia: '2024', anoRainha: '2024', active: true },
-                { id: '4', anoColmeia: '2021', anoRainha: '2022', active: false }
-            ]);
-        }
+                // 2. Buscar Colmeias
+                let colmeiasApi = await buscarColmeiasDoApiario(id);
+                if (colmeiasApi && !Array.isArray(colmeiasApi) && Array.isArray(colmeiasApi.dados)) {
+                    colmeiasApi = colmeiasApi.dados;
+                }
+                setHives(Array.isArray(colmeiasApi) ? colmeiasApi : []);
+
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                showToast("Erro ao carregar informações do apiário", "error");
+            }
+        };
+
+        loadData();
+
+        // Carrega tipos de mel (mantém local por enquanto ou move para constante)
+        // Tipos de mel padrão
+        setHoneyTypes(["Silvestre", "Eucalipto", "Laranjeira", "Jataí", "Mandaçaia"]);
+
     }, [id]);
 
-    const showToast = (message, type) => setToast({ message, type });
 
-    const handleDeleteHive = (hiveId) => {
-        const storedHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
-        const updatedHives = storedHives.filter(h => String(h.id) !== String(hiveId));
-        localStorage.setItem('hf_hives', JSON.stringify(updatedHives));
-        setHives(hives.filter(h => String(h.id) !== String(hiveId)));
-        showToast('Colmeia removida com sucesso!', 'success');
-    };
 
-    const handleToggleHive = (hiveId) => {
-        setHives(hives.map(h =>
-            String(h.id) === String(hiveId)
-                ? { ...h, active: !h.active }
-                : h
-        ));
-        showToast('Status da colmeia atualizado!', 'success');
-    };
+    const handleSaveApiaryData = async (updatedData) => {
+        try {
+            // Mapeia estrutura para atualização
+            // Nota: Precisamos enviar o objeto completo conforme PUT costuma exigir, 
+            // então mesclamos com o estado atual 'apiary'
+            const payload = {
+                localizacao: {
+                    ...apiary.localizacao,
+                    descricaoLocal: updatedData.nomeApelido || apiary.localizacao?.descricaoLocal
+                },
+                coord_X: apiary.coord_X,
+                coord_Y: apiary.coord_Y,
+                bioma: apiary.bioma || "Não informado",
+                tipoDeAbelha: updatedData.tipoAbelha || apiary.tipoDeAbelha,
+                tipoDeMel: updatedData.tipoMel || apiary.tipoDeMel,
+                atividade: apiary.atividade || 1
+            };
 
-    const handleSaveApiaryData = (updatedData) => {
-        const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
-        const updatedApiaries = storedApiaries.map(a =>
-            String(a.id) === String(id) ? { ...a, ...updatedData } : a
-        );
-        localStorage.setItem('hf_apiaries', JSON.stringify(updatedApiaries));
-        setApiary(prev => ({ ...prev, ...updatedData }));
+            await editarApiario(id, payload);
+
+            setApiary(prev => ({ ...prev, ...updatedData }));
+            // Mantém formData sincronizado
+            setFormData(prev => ({ ...prev, ...updatedData }));
+
+        } catch (error) {
+            console.error("Erro ao salvar:", error);
+            showToast("Erro ao atualizar apiário.", "error");
+            throw error; // Propaga erro para quem chamou tratar UI se precisar
+        }
     };
 
     const handleSaveTitle = () => {
@@ -157,14 +157,66 @@ const ApiaryDetails = () => {
     const handleAddHive = () => navigate('/cadastro-colmeia');
 
     const getPolygonCenter = () => {
+        // Se tem polígono, valida e usa o centro dele
         if (apiary?.polygon?.length > 0) {
-            const lats = apiary.polygon.map(p => p.lat);
-            const lngs = apiary.polygon.map(p => p.lng);
-            return [
-                (Math.min(...lats) + Math.max(...lats)) / 2,
-                (Math.min(...lngs) + Math.max(...lngs)) / 2
-            ];
+            try {
+                const validPoints = apiary.polygon
+                    .map(p => {
+                        const lat = parseFloat(String(p.lat).trim());
+                        const lng = parseFloat(String(p.lng).trim());
+
+                        if (isNaN(lat) || isNaN(lng)) return null;
+                        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+
+                        return { lat, lng };
+                    })
+                    .filter(p => p !== null);
+
+                if (validPoints.length >= 3) {
+                    const lats = validPoints.map(p => p.lat);
+                    const lngs = validPoints.map(p => p.lng);
+                    return [
+                        (Math.min(...lats) + Math.max(...lats)) / 2,
+                        (Math.min(...lngs) + Math.max(...lngs)) / 2
+                    ];
+                }
+            } catch (e) {
+                console.warn("Erro ao processar polígono:", e);
+            }
         }
+
+        // Se não tem polígono mas tem coordenadas da API, valida e usa elas
+        if (apiary?.coord_Y || apiary?.coord_X) {
+            try {
+                // Remove espaços e converte para número
+                const latStr = String(apiary.coord_Y || '').trim();
+                const lngStr = String(apiary.coord_X || '').trim();
+
+                // Pula valores "Não informado" ou vazios
+                if (latStr === '' || latStr === 'Não informado' ||
+                    lngStr === '' || lngStr === 'Não informado') {
+                    console.warn(`⚠️ Coordenadas não informadas para ${apiary?.nomeApelido}`);
+                } else {
+                    const lat = parseFloat(latStr);
+                    const lng = parseFloat(lngStr);
+
+                    // Validação rigorosa
+                    if (!isNaN(lat) && !isNaN(lng) &&
+                        lat >= -90 && lat <= 90 &&
+                        lng >= -180 && lng <= 180) {
+                        console.log(`✅ Usando coordenadas válidas: [${lat}, ${lng}]`);
+                        return [lat, lng];
+                    } else {
+                        console.warn(`⚠️ Coordenadas fora do range: lat=${lat}, lng=${lng}`);
+                    }
+                }
+            } catch (e) {
+                console.warn("Erro ao parsear coordenadas:", e);
+            }
+        }
+
+        // Fallback padrão
+        console.warn(`⚠️ Sem coordenadas válidas para ${apiary?.nomeApelido}, usando fallback`);
         return [-5.1753, -40.6769]; // Crateús, CE
     };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { buscarApiarios, criarColmeia } from '../services/apiarioService';
 import { MapContainer, TileLayer, Marker, Polygon, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -71,14 +72,47 @@ const LocationPicker = ({ onLocationSelect, apiaryPolygon, showError }) => {
     );
 };
 
-// Componente para centralizar no polígono do apiário selecionado
+// Helper para converter string numérica em float
+const parseCoordinate = (value) => {
+    if (value === null || value === undefined || value === '') return null;
+    if (typeof value === 'number') return isNaN(value) ? null : value;
+
+    const str = String(value).trim();
+    if (str === '' || str === 'Não informado' || str === 'null' || str === 'undefined') return null;
+
+    const num = parseFloat(str);
+    return isNaN(num) ? null : num;
+};
+
+// Helper para validar coordenadas
+const isValidCoordinate = (lat, lng) => {
+    return lat !== null && lng !== null && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+};
+
+// Componente para centralizar no polígono ou coordenadas do apiário selecionado
 const FlyToApiary = ({ apiary }) => {
     const map = useMap();
 
     useEffect(() => {
-        if (apiary && apiary.polygon && apiary.polygon.length > 0) {
-            const bounds = L.latLngBounds(apiary.polygon.map(p => [p.lat, p.lng]));
-            map.flyToBounds(bounds, { padding: [50, 50], duration: 1 });
+        if (!apiary) return;
+
+        // Se tem polígono válido, usa os bounds
+        if (apiary.polygon && apiary.polygon.length > 0) {
+            try {
+                const bounds = L.latLngBounds(apiary.polygon.map(p => [p.lat, p.lng]));
+                map.flyToBounds(bounds, { padding: [50, 50], duration: 1 });
+                return;
+            } catch (e) {
+                console.warn("Erro ao processar polígono:", e);
+            }
+        }
+
+        // Se não tem polígono, tenta usar as coordenadas diretas
+        const lat = parseCoordinate(apiary.coord_Y || apiary.latitude);
+        const lng = parseCoordinate(apiary.coord_X || apiary.longitude);
+
+        if (isValidCoordinate(lat, lng)) {
+            map.flyTo([lat, lng], 15, { duration: 1 });
         }
     }, [apiary, map]);
 
@@ -103,14 +137,67 @@ const HiveRegistration = () => {
 
     const location = useLocation();
 
-    // Carrega apiários e tipos de mel do localStorage
+    // Carrega apiários da API
     useEffect(() => {
-        const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
-        setApiaries(storedApiaries);
+        const loadApiarios = async () => {
+            try {
+                let data = await buscarApiarios();
+                console.log("Apiários carregados:", data);
 
-        // Carrega tipos de mel salvos
-        const storedHoneyTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
-        setHoneyTypes(storedHoneyTypes);
+                // Garante que data é um array
+                if (!Array.isArray(data)) {
+                    // Tenta ver se veio envelopado em alguma propriedade
+                    if (data && Array.isArray(data.dados)) {
+                        data = data.dados;
+                    } else if (data && Array.isArray(data.data)) {
+                        data = data.data;
+                    } else if (data && Array.isArray(data.value)) { // OData ou similar
+                        data = data.value;
+                    } else {
+                        console.warn("A resposta da API não é um array:", data);
+                        data = [];
+                    }
+                }
+                // A API pode retornar apiários sem polígono.
+                // Tentamos recuperar o polígono desenhado do localStorage.
+
+                // Mapeia para adicionar polígono visual se tiver coordenadas
+                const apiariosComPoligono = data.map(api => {
+                    let polygon = [];
+                    // Como a API só retorna ponto central, criamos um quadrado padrão para visualização
+                    if (api.coord_X && api.coord_Y) {
+                        const lat = parseFloat(api.coord_Y);
+                        const lng = parseFloat(api.coord_X);
+                        // Verifica se são números válidos
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            polygon = [
+                                { lat: lat + 0.001, lng: lng - 0.001 },
+                                { lat: lat + 0.001, lng: lng + 0.001 },
+                                { lat: lat - 0.001, lng: lng + 0.001 },
+                                { lat: lat - 0.001, lng: lng - 0.001 }
+                            ];
+                        }
+                    }
+
+                    return {
+                        ...api,
+                        polygon: polygon,
+                        nomeApelido: api.localizacao?.descricaoLocal || 'Apiário sem nome'
+                    };
+                });
+
+                setApiaries(apiariosComPoligono);
+            } catch (error) {
+                console.error("Erro ao buscar apiários:", error);
+                showToast("Erro ao carregar lista de apiários.", "error");
+            }
+        };
+
+        loadApiarios();
+
+        // Tipos de mel padrão para sugestão
+        const defaultHoneyTypes = ["Silvestre", "Eucalipto", "Laranjeira", "Jataí", "Mandaçaia"];
+        setHoneyTypes(defaultHoneyTypes);
 
         // Preenche o apiário se vier da navegação (após cadastro de apiário)
         if (location.state?.apiarioId) {
@@ -118,13 +205,31 @@ const HiveRegistration = () => {
         }
     }, [location.state]);
 
-    // Atualiza o apiário selecionado quando muda a seleção
+    // Atualiza o apiário selecionado quando formData.apiario muda
     useEffect(() => {
-        if (formData.apiario) {
-            const apiary = apiaries.find(ap => String(ap.id) === formData.apiario);
-            setSelectedApiary(apiary || null);
+        if (formData.apiario && apiaries.length > 0) {
+            const selected = apiaries.find(ap => String(ap.id) === String(formData.apiario));
+            setSelectedApiary(selected || null);
+
+            if (selected) {
+                // Preenche os campos de coordenadas se disponíveis
+                const lat = parseCoordinate(selected.coord_Y || selected.latitude);
+                const lng = parseCoordinate(selected.coord_X || selected.longitude);
+
+                if (isValidCoordinate(lat, lng)) {
+                    setCoords({
+                        lat: lat.toFixed(6),
+                        lng: lng.toFixed(6)
+                    });
+                    console.log(`✅ Apiário "${selected.nomeApelido}" selecionado: [${lat}, ${lng}]`);
+                } else {
+                    console.warn(`⚠️ Apiário "${selected.nomeApelido}" sem coordenadas válidas`);
+                    setCoords({ lat: '', lng: '' });
+                }
+            }
         } else {
             setSelectedApiary(null);
+            setCoords({ lat: '', lng: '' });
         }
     }, [formData.apiario, apiaries]);
 
@@ -162,7 +267,8 @@ const HiveRegistration = () => {
         navigate('/dashboard');
     };
 
-    const handleSave = () => {
+
+    const handleSave = async () => {
         // Validação de campos obrigatórios
         if (!formData.apiario) {
             showToast('Por favor, selecione um apiário.', 'error');
@@ -172,40 +278,35 @@ const HiveRegistration = () => {
             showToast('Por favor, informe o ano da colmeia.', 'error');
             return;
         }
-        if (!coords.lat || !coords.lng) {
-            showToast('Obrigatório: Clique no mapa para selecionar a localização da colmeia!', 'error');
-            return;
-        }
+        // Validação de coordenadas opcional dependendo da regra de negócio, 
+        // mas como a tela pede clique no mapa, vamos manter.
+        // Nota: A API CriarColmeia no exemplo do swagger não pede coordenadas explicitas no corpo, 
+        // pede apenas: apiarioId, anoColmeia, anoRainha, status.
+        // Se precisar de coordenadas, precisaremos ver se a API foi atualizada ou se isso vai no 'observacao' ou outro lugar.
+        // Pelo Swagger enviado: { "apiarioId": 0, "anoColmeia": 0, "anoRainha": 0, "status": 0 }
 
-        const newHive = {
-            id: Date.now(),
-            ...formData,
-            ...coords,
-            createdAt: new Date().toISOString()
+        // Vamos enviar o básico para funcionar com o endpoint fornecido.
+
+        const payload = {
+            apiarioId: parseInt(formData.apiario),
+            anoColmeia: parseInt(formData.anoColmeia),
+            anoRainha: parseInt(formData.anoRainha) || parseInt(formData.anoColmeia), // Default se vazio
+            status: 1, // 1 = Ativa (Exemplo)
+            tipoMel: formData.tipoMel // Se a API aceitar, senão será ignorado (o swagger não mostrou, mas é bom tentar)
         };
 
         try {
-            const existingHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
-            const updatedHives = [...existingHives, newHive];
-            localStorage.setItem('hf_hives', JSON.stringify(updatedHives));
-
-            // Salva novo tipo de mel se não existir
-            if (formData.tipoMel && formData.tipoMel.trim()) {
-                const existingTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
-                if (!existingTypes.includes(formData.tipoMel.trim())) {
-                    const updatedTypes = [...existingTypes, formData.tipoMel.trim()];
-                    localStorage.setItem('hf_honey_types', JSON.stringify(updatedTypes));
-                }
-            }
+            await criarColmeia(payload);
 
             showToast('Colmeia cadastrada com sucesso!', 'success');
 
             setTimeout(() => {
                 navigate('/dashboard');
             }, 1500);
+
         } catch (error) {
-            console.error("Error saving to localStorage:", error);
-            showToast('Erro ao salvar os dados. Tente novamente.', 'error');
+            console.error("Erro ao salvar colmeia:", error);
+            showToast('Erro ao salvar colmeia na API.', 'error');
         }
     };
 

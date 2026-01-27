@@ -4,9 +4,43 @@ import { MapContainer, TileLayer, Marker, Popup, Polygon, useMapEvents, useMap }
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { createHiveIcon } from './HiveMarker';
+import { buscarApiarios, buscarColmeias } from '../services/apiarioService';
 
 // Define o ícone padrão do Leaflet como o nosso HiveMarker
 L.Marker.prototype.options.icon = createHiveIcon();
+
+/**
+ * Função auxiliar para converter string para número com validação
+ * @param {string|number} value - Valor a converter
+ * @returns {number|null} - Número convertido ou null
+ */
+const parseCoordinate = (value) => {
+    if (value === null || value === undefined || value === '') return null;
+
+    // Se for número, retorna direto
+    if (typeof value === 'number') {
+        return isNaN(value) ? null : value;
+    }
+
+    // Se for string, remove espaços e converte
+    const str = String(value).trim();
+    if (str === '' || str === 'Não informado' || str === 'null' || str === 'undefined') {
+        return null;
+    }
+
+    const num = parseFloat(str);
+    return isNaN(num) ? null : num;
+};
+
+/**
+ * Valida se coordenadas estão dentro do range válido
+ * @param {number} lat - Latitude (-90 a 90)
+ * @param {number} lng - Longitude (-180 a 180)
+ * @returns {boolean}
+ */
+const isValidCoordinate = (lat, lng) => {
+    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+};
 
 // Componente para voar até uma localização específica
 const FlyToLocation = ({ location }) => {
@@ -56,9 +90,29 @@ const ClickablePolygon = ({ apiary, navigate }) => {
 
     if (!apiary.polygon || apiary.polygon.length === 0) return null;
 
+    // Validar todos os pontos do polígono
+    const validPositions = apiary.polygon
+        .map(p => {
+            const lat = parseCoordinate(p.lat);
+            const lng = parseCoordinate(p.lng);
+
+            // Retorna null se coordenadas inválidas
+            if (lat === null || lng === null || !isValidCoordinate(lat, lng)) {
+                return null;
+            }
+            return [lat, lng];
+        })
+        .filter(pos => pos !== null); // Remove posições inválidas
+
+    // Se não tem posições válidas, não renderiza
+    if (validPositions.length < 3) {
+        console.warn(`⚠️ Polígono de "${apiary.nomeApelido}" tem coordenadas inválidas. Pulando renderização.`);
+        return null;
+    }
+
     return (
         <Polygon
-            positions={apiary.polygon.map(p => [p.lat, p.lng])}
+            positions={validPositions}
             pathOptions={{
                 color: '#ffbd59',
                 fillColor: '#ffbd59',
@@ -75,6 +129,52 @@ const ClickablePolygon = ({ apiary, navigate }) => {
                 <em style={{ fontSize: '12px', color: '#666' }}>Clique para ver detalhes</em>
             </Popup>
         </Polygon>
+    );
+};
+
+// Componente para marcador quando só houver coordenadas (sem polígono)
+const ApiaryMarker = ({ apiary, navigate }) => {
+    const handleClick = () => {
+        navigate(`/apiario/${apiary.id}`);
+    };
+
+    // Se tem polygon, deixa o ClickablePolygon renderizar
+    if (apiary.polygon && apiary.polygon.length > 0) return null;
+
+    // Tentar múltiplas formas de obter coordenadas com validação
+    const lat = parseCoordinate(apiary.coord_Y || apiary.latitude);
+    const lng = parseCoordinate(apiary.coord_X || apiary.longitude);
+
+    // Validação rigorosa
+    if (lat === null || lng === null) {
+        // Sem coordenadas válidas
+        return null;
+    }
+
+    // Validação de range
+    if (!isValidCoordinate(lat, lng)) {
+        console.warn(
+            `⚠️ Apiário "${apiary.nomeApelido}" (ID: ${apiary.id}) tem coordenadas fora do range:`,
+            { coord_X: apiary.coord_X, coord_Y: apiary.coord_Y, lat, lng }
+        );
+        return null;
+    }
+
+    return (
+        <Marker
+            position={[lat, lng]}
+            icon={createHiveIcon()}
+            eventHandlers={{
+                click: handleClick
+            }}
+        >
+            <Popup>
+                <strong>{apiary.nomeApelido}</strong><br />
+                Tipo: {apiary.tipoAbelha || 'N/A'}<br />
+                Coord: [{lat.toFixed(4)}, {lng.toFixed(4)}]<br />
+                <em style={{ fontSize: '12px', color: '#666' }}>Clique para ver detalhes</em>
+            </Popup>
+        </Marker>
     );
 };
 
@@ -96,13 +196,81 @@ const MapArea = ({ flyToLocation }) => {
     const [apiaries, setApiaries] = useState([]);
 
     useEffect(() => {
-        // Carrega as colmeias do localStorage
-        const storedHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
-        setHives(storedHives);
+        const loadData = async () => {
+            try {
+                // Carrega apiários da API
+                let apiariesData = await buscarApiarios();
+                console.log('📍 Apiários da API:', apiariesData);
 
-        // Carrega os apiários do localStorage
-        const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
-        setApiaries(storedApiaries);
+                // Garante que é um array
+                if (!Array.isArray(apiariesData)) {
+                    if (apiariesData?.dados) apiariesData = apiariesData.dados;
+                    else if (apiariesData?.data) apiariesData = apiariesData.data;
+                    else apiariesData = [];
+                }
+
+                const processedApiaries = apiariesData.map(api => {
+                    let polygon = [];
+                    // Gera polígono padrão baseado nas coordenadas (visualização apenas)
+                    if (api.coord_X && api.coord_Y) {
+                        const lat = parseFloat(api.coord_Y);
+                        const lng = parseFloat(api.coord_X);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            polygon = [
+                                { lat: lat + 0.001, lng: lng - 0.001 },
+                                { lat: lat + 0.001, lng: lng + 0.001 },
+                                { lat: lat - 0.001, lng: lng + 0.001 },
+                                { lat: lat - 0.001, lng: lng - 0.001 }
+                            ];
+                        }
+                    }
+
+                    return {
+                        ...api,
+                        polygon: polygon,
+                        nomeApelido: api.nomeApelido || api.localizacao?.descricaoLocal || `Apiário ${api.id}`
+                    };
+                });
+
+                setApiaries(processedApiaries);
+                console.log('✅ Apiários carregados:', processedApiaries.length);
+            } catch (error) {
+                console.error('❌ Erro ao carregar apiários:', error);
+            }
+
+            try {
+                // Carrega colmeias da API
+                let hivesData = await buscarColmeias();
+                console.log('🐝 Colmeias da API:', hivesData);
+
+                // Garante que é um array
+                if (!Array.isArray(hivesData)) {
+                    if (hivesData?.dados) hivesData = hivesData.dados;
+                    else if (hivesData?.data) hivesData = hivesData.data;
+                    else hivesData = [];
+                }
+
+                // Log detalhado de cada colmeia
+                console.log(`✅ Colmeias carregadas: ${hivesData.length}`);
+                hivesData.forEach((hive, idx) => {
+                    console.log(`   Colmeia ${idx + 1}:`, {
+                        id: hive.id,
+                        apiarioId: hive.apiarioId || hive.apiario,
+                        anoColmeia: hive.anoColmeia,
+                        lat: hive.lat || hive.latitude,
+                        lng: hive.lng || hive.longitude
+                    });
+                });
+
+                setHives(hivesData);
+                setHives(hivesData);
+            } catch (error) {
+                console.error('❌ Erro ao carregar colmeias:', error);
+                setHives([]);
+            }
+        };
+
+        loadData();
     }, []);
 
     // Encontra o nome do apiário pelo ID
@@ -134,31 +302,78 @@ const MapArea = ({ flyToLocation }) => {
                     />
                 ))}
 
+                {/* Renderiza marcadores para apiários sem polígono mas com coordenadas */}
+                {apiaries.map((apiary) => (
+                    <ApiaryMarker
+                        key={`marker-${apiary.id}`}
+                        apiary={apiary}
+                        navigate={navigate}
+                    />
+                ))}
+
                 {/* Renderiza marcadores para cada colmeia salva (apenas ativas) */}
-                {hives.map((hive) => (
-                    hive.lat && hive.lng && hive.active !== false && (
+                {hives.map((hive) => {
+                    // Tenta obter as coordenadas da colmeia ou do apiário
+                    const hiveLat = parseCoordinate(hive.lat || hive.latitude);
+                    const hiveLng = parseCoordinate(hive.lng || hive.longitude);
+
+                    // Se não tem coordenadas próprias, tenta usar do apiário
+                    const apiary = apiaries.find(ap => String(ap.id) === String(hive.apiarioId || hive.apiario));
+                    const apLat = apiary ? parseCoordinate(apiary.coord_Y || apiary.latitude) : null;
+                    const apLng = apiary ? parseCoordinate(apiary.coord_X || apiary.longitude) : null;
+
+                    const finalLat = hiveLat || apLat;
+                    const finalLng = hiveLng || apLng;
+
+                    // Debug: mostra por que colmeias não aparecem
+                    if (!isValidCoordinate(finalLat, finalLng)) {
+                        console.warn(
+                            `⚠️ Colmeia ${hive.id} sem coordenadas válidas:`,
+                            {
+                                hiveLat,
+                                hiveLng,
+                                apLat,
+                                apLng,
+                                apiarioId: hive.apiarioId || hive.apiario,
+                                apiarioEncontrado: !!apiary
+                            }
+                        );
+                        return null;
+                    }
+
+                    console.log(`✅ Colmeia ${hive.id} renderizada em [${finalLat}, ${finalLng}]`);
+
+                    return (
                         <Marker
-                            key={hive.id}
-                            position={[parseFloat(hive.lat), parseFloat(hive.lng)]}
-                            icon={createHiveIcon()} // Usa o ícone personalizado
+                            key={`hive-${hive.id}`}
+                            position={[finalLat, finalLng]}
+                            icon={createHiveIcon()}
+                            title={`Colmeia ${hive.id} - ${hive.anoColmeia}`}
                             eventHandlers={{
                                 click: () => {
-                                    if (hive.apiario) {
-                                        navigate(`/apiario/${hive.apiario}`);
+                                    console.log(`🖱️ Clicou na colmeia ${hive.id}`);
+                                    if (hive.apiarioId || hive.apiario) {
+                                        navigate(`/apiario/${hive.apiarioId || hive.apiario}`);
                                     }
+                                },
+                                mouseover: (e) => {
+                                    e.target.openPopup();
+                                },
+                                mouseout: (e) => {
+                                    e.target.closePopup();
                                 }
                             }}
                         >
                             <Popup>
                                 <strong>Colmeia #{hive.id}</strong><br />
-                                Apiário: {getApiaryName(hive.apiario)}<br />
+                                Apiário: {apiary?.nomeApelido || `ID ${hive.apiarioId || hive.apiario}`}<br />
                                 Ano: {hive.anoColmeia}<br />
                                 Rainha: {hive.anoRainha || 'N/A'}<br />
                                 <em style={{ fontSize: '12px', color: '#666' }}>Clique para ver detalhes</em>
                             </Popup>
                         </Marker>
-                    )
-                ))}
+                    );
+                })}
             </MapContainer>
         </div>
     );

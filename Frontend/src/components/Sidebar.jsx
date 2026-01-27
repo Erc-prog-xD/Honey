@@ -24,41 +24,72 @@ const HiveItem = ({ name, onClick }) => (
     </div>
 );
 
+import { buscarApiarios, buscarColmeias } from '../services/apiarioService';
+
 const Sidebar = ({ onHiveSelect }) => {
     const [apiaries, setApiaries] = useState([]);
     const [hives, setHives] = useState([]);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
-        // Carrega apiários e colmeias do localStorage
-        const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
-        const storedHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
+        const loadData = async () => {
+            try {
+                const [apiariesData, hivesData] = await Promise.all([
+                    buscarApiarios(),
+                    buscarColmeias()
+                ]);
 
-        // RF20: Filtra apenas apiários que TÊM colmeias (ativas ou inativas)
-        const apiariesWithHives = storedApiaries.filter(apiary => {
-            const hasHives = storedHives.some(hive => String(hive.apiario) === String(apiary.id));
-            return hasHives;
-        });
+                // Tratamento de dados para Apiários
+                let safeApiaries = [];
+                if (Array.isArray(apiariesData)) {
+                    safeApiaries = apiariesData;
+                } else if (apiariesData?.dados && Array.isArray(apiariesData.dados)) {
+                    safeApiaries = apiariesData.dados;
+                }
 
-        // Se algum apiário foi removido, atualiza o localStorage
-        if (apiariesWithHives.length !== storedApiaries.length) {
-            localStorage.setItem('hf_apiaries', JSON.stringify(apiariesWithHives));
-        }
+                // Tratamento de dados para Colmeias
+                let safeHives = [];
+                if (Array.isArray(hivesData)) {
+                    safeHives = hivesData;
+                } else if (hivesData?.dados && Array.isArray(hivesData.dados)) {
+                    safeHives = hivesData.dados;
+                } else if (Array.isArray(hivesData)) { // Caso buscarColmeias já retorne array achatado
+                    safeHives = hivesData;
+                }
 
-        setApiaries(apiariesWithHives);
-        setHives(storedHives);
+                setApiaries(safeApiaries);
+                setHives(safeHives);
+            } catch (error) {
+                console.error("Erro ao carregar dados do Sidebar:", error);
+            }
+        };
+
+        loadData();
     }, []);
 
     const handleHiveClick = (hive) => {
-        if (onHiveSelect && hive.lat && hive.lng) {
-            onHiveSelect(parseFloat(hive.lat), parseFloat(hive.lng));
+        // Tenta usar coordenadas da colmeia ou do apiário vinculado
+        let lat = parseFloat(hive.lat || hive.latitude);
+        let lng = parseFloat(hive.lng || hive.longitude);
+
+        // Se a colmeia não tem coord, tenta achar o apiário
+        if (isNaN(lat) || isNaN(lng)) {
+            const apiary = apiaries.find(a => String(a.id) === String(hive.apiarioId || hive.apiario));
+            if (apiary) {
+                lat = parseFloat(apiary.coord_Y);
+                lng = parseFloat(apiary.coord_X);
+            }
+        }
+
+        if (onHiveSelect && !isNaN(lat) && !isNaN(lng)) {
+            onHiveSelect(lat, lng);
         }
         setIsMobileMenuOpen(false); // Fecha o menu ao selecionar
     };
 
     // Agrupa colmeias por apiário (apenas ativas)
     const getHivesForApiary = (apiaryId) => {
-        return hives.filter(hive => hive.apiario === String(apiaryId) && hive.active !== false);
+        return hives.filter(hive => String(hive.apiarioId || hive.apiario) === String(apiaryId) && hive.active !== false);
     };
 
     const toggleMobileMenu = () => {
