@@ -4,42 +4,43 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ArrowLeft } from 'lucide-react';
 import '../assets/css/HiveRegistration.css';
 import '../assets/css/Reports.css';
-
-// Components
+import { buscarApiarios } from '../services/apiarioService';
 import Navbar from '../components/Navbar';
 import CustomSelect from '../components/CustomSelect';
 
 const SalesReport = () => {
     const navigate = useNavigate();
+    const [apiarios, setApiarios] = useState([]);
+    const [apiarioId, setApiarioId] = useState('');
     const [periodo, setPeriodo] = useState('ano');
-    const [ano, setAno] = useState('2025');
-    const [mes, setMes] = useState('01');
+    const [ano, setAno] = useState(new Date().getFullYear().toString());
+    const [mes, setMes] = useState((new Date().getMonth() + 1).toString());
     const [semana, setSemana] = useState('1');
     const [salesData, setSalesData] = useState([]);
     const [priceData, setPriceData] = useState([]);
 
     const periodOptions = [
-        { value: 'ano', label: 'Ano' },
-        { value: 'mes', label: 'Mês' },
-        { value: 'semana', label: 'Semana' }
+        { value: 'ano', label: 'Anual' },
+        { value: 'mes', label: 'Mensal' },
+        { value: 'semana', label: 'Semanal' }
     ];
 
     const yearOptions = [
-        { value: '2026', label: '2026' },
         { value: '2025', label: '2025' },
-        { value: '2024', label: '2024' }
+        { value: '2024', label: '2024' },
+        { value: '2023', label: '2023' }
     ];
 
     const monthOptions = [
-        { value: '01', label: 'Janeiro' },
-        { value: '02', label: 'Fevereiro' },
-        { value: '03', label: 'Março' },
-        { value: '04', label: 'Abril' },
-        { value: '05', label: 'Maio' },
-        { value: '06', label: 'Junho' },
-        { value: '07', label: 'Julho' },
-        { value: '08', label: 'Agosto' },
-        { value: '09', label: 'Setembro' },
+        { value: '1', label: 'Janeiro' },
+        { value: '2', label: 'Fevereiro' },
+        { value: '3', label: 'Março' },
+        { value: '4', label: 'Abril' },
+        { value: '5', label: 'Maio' },
+        { value: '6', label: 'Junho' },
+        { value: '7', label: 'Julho' },
+        { value: '8', label: 'Agosto' },
+        { value: '9', label: 'Setembro' },
         { value: '10', label: 'Outubro' },
         { value: '11', label: 'Novembro' },
         { value: '12', label: 'Dezembro' }
@@ -49,85 +50,79 @@ const SalesReport = () => {
         { value: '1', label: 'Semana 1' },
         { value: '2', label: 'Semana 2' },
         { value: '3', label: 'Semana 3' },
-        { value: '4', label: 'Semana 4' },
-        { value: '5', label: 'Semana 5' }
+        { value: '4', label: 'Semana 4' }
     ];
 
-    // Dados mockados para demonstração
+    const vendasAnual = [
+        { name: 'Jan', valor: 4200 },
+        { name: 'Fev', valor: 3800 },
+        { name: 'Mar', valor: 4500 },
+        { name: 'Abr', valor: 5120 },
+        { name: 'Mai', valor: 5800 },
+        { name: 'Jun', valor: 4900 },
+        { name: 'Jul', valor: 4600 },
+        { name: 'Ago', valor: 4800 },
+        { name: 'Set', valor: 5120 },
+        { name: 'Out', valor: 4750 },
+        { name: 'Nov', valor: 4320 },
+        { name: 'Dez', valor: 5890 }
+    ];
+
+    const precosAnual = [
+        { name: 'Jan', valor: 28 },
+        { name: 'Fev', valor: 30 },
+        { name: 'Mar', valor: 29 },
+        { name: 'Abr', valor: 32 },
+        { name: 'Mai', valor: 35 },
+        { name: 'Jun', valor: 33 },
+        { name: 'Jul', valor: 31 },
+        { name: 'Ago', valor: 34 },
+        { name: 'Set', valor: 36 },
+        { name: 'Out', valor: 38 },
+        { name: 'Nov', valor: 37 },
+        { name: 'Dez', valor: 40 }
+    ];
+
+    const getMensalData = (baseVenda, basePreco) => {
+        const dias = [];
+        const diasPreco = [];
+        for (let i = 1; i <= 30; i++) {
+            dias.push({
+                name: `${i}`,
+                valor: Math.floor(baseVenda * (0.3 + Math.random() * 0.9))
+            });
+            diasPreco.push({
+                name: `${i}`,
+                valor: Math.floor(basePreco * (0.9 + Math.random() * 0.2))
+            });
+        }
+        return { vendas: dias, precos: diasPreco };
+    };
+
+    const getSemanalData = (baseVenda, basePreco) => {
+        return {
+            vendas: [
+                { name: 'Seg', valor: Math.floor(baseVenda * (0.8 + Math.random() * 0.4)) },
+                { name: 'Ter', valor: Math.floor(baseVenda * (0.7 + Math.random() * 0.5)) },
+                { name: 'Qua', valor: Math.floor(baseVenda * (0.9 + Math.random() * 0.3)) },
+                { name: 'Qui', valor: Math.floor(baseVenda * (0.6 + Math.random() * 0.6)) },
+                { name: 'Sex', valor: Math.floor(baseVenda * (1.0 + Math.random() * 0.4)) },
+                { name: 'Sáb', valor: Math.floor(baseVenda * (1.2 + Math.random() * 0.5)) },
+                { name: 'Dom', valor: Math.floor(baseVenda * (0.5 + Math.random() * 0.3)) }
+            ],
+            precos: [
+                { name: 'Seg', valor: basePreco },
+                { name: 'Ter', valor: basePreco },
+                { name: 'Qua', valor: basePreco },
+                { name: 'Qui', valor: basePreco },
+                { name: 'Sex', valor: Math.floor(basePreco * 1.05) },
+                { name: 'Sáb', valor: Math.floor(basePreco * 1.1) },
+                { name: 'Dom', valor: Math.floor(basePreco * 1.1) }
+            ]
+        };
+    };
+
     const getMockData = () => {
-        // Dados anuais de vendas (R$)
-        const vendasAnual = [
-            { name: 'Jan', valor: 2450 },
-            { name: 'Fev', valor: 3200 },
-            { name: 'Mar', valor: 2890 },
-            { name: 'Abr', valor: 3650 },
-            { name: 'Mai', valor: 4200 },
-            { name: 'Jun', valor: 3980 },
-            { name: 'Jul', valor: 3540 },
-            { name: 'Ago', valor: 4580 },
-            { name: 'Set', valor: 5120 },
-            { name: 'Out', valor: 4750 },
-            { name: 'Nov', valor: 4320 },
-            { name: 'Dez', valor: 5890 }
-        ];
-
-        // Preço por litro ao longo do ano
-        const precosAnual = [
-            { name: 'Jan', valor: 28 },
-            { name: 'Fev', valor: 30 },
-            { name: 'Mar', valor: 29 },
-            { name: 'Abr', valor: 32 },
-            { name: 'Mai', valor: 35 },
-            { name: 'Jun', valor: 33 },
-            { name: 'Jul', valor: 31 },
-            { name: 'Ago', valor: 34 },
-            { name: 'Set', valor: 36 },
-            { name: 'Out', valor: 38 },
-            { name: 'Nov', valor: 37 },
-            { name: 'Dez', valor: 40 }
-        ];
-
-        // Dados mensais (por dia)
-        const getMensalData = (baseVenda, basePreco) => {
-            const dias = [];
-            const diasPreco = [];
-            for (let i = 1; i <= 30; i++) {
-                dias.push({
-                    name: `${i}`,
-                    valor: Math.floor(baseVenda * (0.3 + Math.random() * 0.9))
-                });
-                diasPreco.push({
-                    name: `${i}`,
-                    valor: Math.floor(basePreco * (0.9 + Math.random() * 0.2))
-                });
-            }
-            return { vendas: dias, precos: diasPreco };
-        };
-
-        // Dados semanais (por dia da semana)
-        const getSemanalData = (baseVenda, basePreco) => {
-            return {
-                vendas: [
-                    { name: 'Seg', valor: Math.floor(baseVenda * (0.8 + Math.random() * 0.4)) },
-                    { name: 'Ter', valor: Math.floor(baseVenda * (0.7 + Math.random() * 0.5)) },
-                    { name: 'Qua', valor: Math.floor(baseVenda * (0.9 + Math.random() * 0.3)) },
-                    { name: 'Qui', valor: Math.floor(baseVenda * (0.6 + Math.random() * 0.6)) },
-                    { name: 'Sex', valor: Math.floor(baseVenda * (1.0 + Math.random() * 0.4)) },
-                    { name: 'Sáb', valor: Math.floor(baseVenda * (1.2 + Math.random() * 0.5)) },
-                    { name: 'Dom', valor: Math.floor(baseVenda * (0.5 + Math.random() * 0.3)) }
-                ],
-                precos: [
-                    { name: 'Seg', valor: basePreco },
-                    { name: 'Ter', valor: basePreco },
-                    { name: 'Qua', valor: basePreco },
-                    { name: 'Qui', valor: basePreco },
-                    { name: 'Sex', valor: Math.floor(basePreco * 1.05) },
-                    { name: 'Sáb', valor: Math.floor(basePreco * 1.1) },
-                    { name: 'Dom', valor: Math.floor(basePreco * 1.1) }
-                ]
-            };
-        };
-
         switch (periodo) {
             case 'ano':
                 return { vendas: vendasAnual, precos: precosAnual };
@@ -140,11 +135,29 @@ const SalesReport = () => {
         }
     };
 
+    // Busca apiários ao carregar
+    useEffect(() => {
+        const loadApiarios = async () => {
+            try {
+                const res = await buscarApiarios();
+                let arr = [];
+                if (Array.isArray(res)) arr = res;
+                else if (res?.dados && Array.isArray(res.dados)) arr = res.dados;
+                setApiarios(arr);
+                if (arr.length > 0 && !apiarioId) setApiarioId(String(arr[0].id));
+            } catch (error) {
+                console.error("Erro ao carregar apiários:", error);
+            }
+        };
+        loadApiarios();
+    }, []);
+
+    // Atualiza dados mockados
     useEffect(() => {
         const mockData = getMockData();
         setSalesData(mockData.vendas);
         setPriceData(mockData.precos);
-    }, [ano, mes, semana, periodo]);
+    }, [ano, mes, semana, periodo, apiarioId]);
 
     const handleBack = () => {
         navigate('/dashboard');
@@ -168,6 +181,15 @@ const SalesReport = () => {
                 </div>
 
                 <div className="report-filters">
+                    <div className="filter-group full-width">
+                        <label>Selecione o apiário</label>
+                        <CustomSelect
+                            options={apiarios.map(a => ({ value: String(a.id), label: a.localizacao?.descricaoLocal || a.nomeApelido || `Apiário #${a.id}` }))}
+                            value={apiarioId}
+                            onChange={setApiarioId}
+                            placeholder="Selecione o apiário"
+                        />
+                    </div>
                     <div className="filter-group">
                         <label>Período</label>
                         <CustomSelect

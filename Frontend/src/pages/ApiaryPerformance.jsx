@@ -55,18 +55,17 @@ const ApiaryPerformance = () => {
         const loadProduction = async () => {
             try {
                 setLoading(true);
-                const data = await buscarProducaoDoApiario(selectedApiary);
+                // ENDPOINT DE PRODUÇÃO ESTÁ DESATIVADO NO BACKEND
+                // const data = await buscarProducaoDoApiario(selectedApiary);
 
-                // Atualiza os cards com dados REAIS da API
+                // Usando dados zerados enquanto backend não é reativado
                 const realTotals = {
-                    producao: data?.totalProduzidoKg || 0,
-                    estoque: data?.estoqueAtualKg || 0,
-                    venda: data?.totalVendido || 0
+                    producao: 0,
+                    estoque: 0,
+                    venda: 0
                 };
                 setTotals(realTotals);
 
-                // Como a API não tem histórico, mostramos o Total Consolidado no gráfico
-                // para manter o visual funcional sem dados fake
                 setChartData([
                     { name: 'Total', valor: realTotals.producao }
                 ]);
@@ -76,7 +75,8 @@ const ApiaryPerformance = () => {
                 setTotals({ producao: 0, estoque: 0, venda: 0 });
                 setChartData([]);
             } finally {
-                setLoading(false);
+                // Simula delay para UX
+                setTimeout(() => setLoading(false), 500);
             }
         };
 
@@ -88,7 +88,10 @@ const ApiaryPerformance = () => {
     };
 
     const apiaryOptions = apiaries.length > 0
-        ? apiaries.map(ap => ({ value: String(ap.id), label: ap.nomeApelido }))
+        ? apiaries.map(ap => ({
+            value: String(ap.id),
+            label: ap.localizacao?.descricaoLocal || ap.nome || `Apiário ${ap.id}`
+        }))
         : [{ value: '', label: 'Apiário 1' }];
 
     // Opções de filtros visuais (apenas UI por enquanto)
