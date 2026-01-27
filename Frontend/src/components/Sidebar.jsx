@@ -101,19 +101,15 @@ const Sidebar = ({ onHiveSelect }) => {
             {apiaries.length === 0 ? (
                 <div className="sidebar-empty">Nenhum apiário cadastrado</div>
             ) : (
-                apiaries.map((apiary) => (
-                    <SidebarItem key={apiary.id} title={apiary.nomeApelido || `Apiário ${apiary.id}`}>
-                        {getHivesForApiary(apiary.id).length === 0 ? (
-                            <div className="sidebar-empty-hives">Sem colmeias</div>
-                        ) : (
-                            getHivesForApiary(apiary.id).map((hive, hiveIndex) => (
-                                <HiveItem
-                                    key={hive.id}
-                                    name={`Colmeia ${hiveIndex + 1}`}
-                                    onClick={() => handleHiveClick(hive)}
-                                />
-                            ))
-                        )}
+                apiaries.filter(a => getHivesForApiary(a.id).length > 0).map((apiario) => (
+                    <SidebarItem key={apiario.id} title={apiario.nomeApelido || `Apiário ${apiario.id}`}>
+                        {getHivesForApiary(apiario.id).map((hive, hiveIndex) => (
+                            <HiveItem
+                                key={hive.id}
+                                name={`Colmeia ${hiveIndex + 1}`}
+                                onClick={() => handleHiveClick(hive)}
+                            />
+                        ))}
                     </SidebarItem>
                 ))
             )}
