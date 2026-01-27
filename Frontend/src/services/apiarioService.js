@@ -32,10 +32,10 @@ export const buscarColmeias = async () => {
     try {
         // Tenta buscar todas as colmeias do usuário
         const apiarios = await buscarApiarios();
-        
+
         // Garante que é um array
         let apiariesArray = Array.isArray(apiarios) ? apiarios : (apiarios?.dados || []);
-        
+
         // Busca colmeias de cada apiário
         const allHives = [];
         for (const apiary of apiariesArray) {
@@ -47,7 +47,7 @@ export const buscarColmeias = async () => {
                 console.warn(`Erro ao buscar colmeias do apiário ${apiary.id}:`, error);
             }
         }
-        
+
         return allHives;
     } catch (error) {
         console.error('Erro ao buscar colmeias:', error);
@@ -74,3 +74,7 @@ export const deletarColmeia = (colmeiaId) =>
     apiFetch(`/api/Colmeia/DeletarColmeia/${colmeiaId}`, {
         method: 'DELETE'
     });
+
+// Buscar produção do apiário
+export const buscarProducaoDoApiario = (apiarioId) =>
+    apiFetch(`/api/Producao/BuscarProducaoDoApiario?apiarioId=${apiarioId}`);

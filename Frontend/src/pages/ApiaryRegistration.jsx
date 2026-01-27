@@ -51,11 +51,21 @@ const ApiaryRegistration = () => {
                 // Mapeia para adicionar polígono visual se tiver coordenadas
                 const mappedApiaries = safeData.map(api => {
                     let polygon = [];
-                    // Como a API só retorna ponto central, criamos um quadrado padrão para visualização
-                    if (api.coord_X && api.coord_Y) {
+                    // Tenta carregar polígono real da Referencia, senão usa o padrão
+                    if (api.localizacao?.referencia) {
+                        try {
+                            const parsed = JSON.parse(api.localizacao.referencia);
+                            if (Array.isArray(parsed) && parsed.length >= 4) {
+                                polygon = parsed;
+                            }
+                        } catch (e) {
+                            console.warn("Erro ao parsear polígono da referencia", e);
+                        }
+                    }
+
+                    if (polygon.length === 0 && api.coord_X && api.coord_Y) {
                         const lat = parseFloat(api.coord_Y);
                         const lng = parseFloat(api.coord_X);
-                        // Verifica se são números válidos
                         if (!isNaN(lat) && !isNaN(lng)) {
                             polygon = [
                                 { lat: lat + 0.001, lng: lng - 0.001 },
@@ -94,6 +104,17 @@ const ApiaryRegistration = () => {
         setPolygonCoords(coords);
     };
 
+    const handlePolygonEdited = (e) => {
+        const layers = e.layers;
+        layers.eachLayer(layer => {
+            const coords = layer.getLatLngs()[0].map(latlng => ({
+                lat: latlng.lat,
+                lng: latlng.lng
+            }));
+            setPolygonCoords(coords);
+        });
+    };
+
     const handlePolygonDeleted = () => {
         setPolygonCoords([]);
     };
@@ -106,8 +127,8 @@ const ApiaryRegistration = () => {
             return;
         }
 
-        if (polygonCoords.length < 3) {
-            showToast('Por favor, desenhe a área do apiário no mapa (mínimo 3 pontos).', 'error');
+        if (polygonCoords.length < 4) {
+            showToast('Por favor, desenhe a área (quadrado) do apiário no mapa.', 'error');
             return;
         }
 
@@ -124,8 +145,8 @@ const ApiaryRegistration = () => {
                 bairro: "Não informado",
                 cidade: "Não informado",
                 estado: "NI",
-                descricaoLocal: formData.nomeApelido, // Usando o nome/apelido como descrição
-                referencia: "Coordenadas do mapa"
+                descricaoLocal: formData.nomeApelido,
+                referencia: JSON.stringify(polygonCoords) // Salva os pontos reais para manter o tamanho
             },
             coord_X: centerLng.toString(), // Longitude como X
             coord_Y: centerLat.toString(), // Latitude como Y
@@ -229,37 +250,39 @@ const ApiaryRegistration = () => {
                                         <EditControl
                                             position="topright"
                                             onCreated={handlePolygonCreated}
+                                            onEdited={handlePolygonEdited}
                                             onDeleted={handlePolygonDeleted}
                                             draw={{
-                                                rectangle: false,
-                                                circle: false,
-                                                circlemarker: false,
-                                                marker: false,
-                                                polyline: false,
-                                                polygon: {
-                                                    allowIntersection: false,
-                                                    drawError: {
-                                                        color: '#e1e100',
-                                                        message: '<strong>Erro:</strong> áreas não podem se cruzar!'
-                                                    },
+                                                rectangle: {
                                                     shapeOptions: {
                                                         color: '#ffbd59',
                                                         fillColor: '#ffbd59',
                                                         fillOpacity: 0.3
-                                                    }
-                                                }
+                                                    },
+                                                    metric: true,
+                                                    showArea: true,
+                                                    repeatMode: false
+                                                },
+                                                circle: false,
+                                                circlemarker: false,
+                                                marker: false,
+                                                polyline: false,
+                                                polygon: false
                                             }}
                                             edit={{
-                                                featureGroup: null,
                                                 remove: true
                                             }}
                                         />
                                     </FeatureGroup>
                                 </MapContainer>
                             </div>
-                            {polygonCoords.length > 0 && (
+                            {polygonCoords.length > 0 ? (
                                 <p style={{ marginTop: '10px', color: 'var(--hf-text-muted)', fontSize: '14px' }}>
-                                    ✓ Área definida com {polygonCoords.length} pontos
+                                    ✓ Área definida! Você pode redimensioná-la usando o ícone de edição.
+                                </p>
+                            ) : (
+                                <p style={{ marginTop: '10px', color: 'var(--hf-text-muted)', fontSize: '14px' }}>
+                                    Selecione a ferramenta de retângulo acima e <strong>clique e arraste</strong> para dimensionar a área.
                                 </p>
                             )}
                         </div>

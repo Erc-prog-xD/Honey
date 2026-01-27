@@ -42,6 +42,27 @@ const isValidCoordinate = (lat, lng) => {
     return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 };
 
+/**
+ * Calcula um deslocamento para evitar sobreposição de marcadores (efeito spider)
+ * @param {number} lat - Latitude original
+ * @param {number} lng - Longitude original
+ * @param {number} index - Índice do marcador no grupo
+ * @param {number} total - Total de marcadores no grupo
+ * @returns {[number, number]} - Nova posição [lat, lng]
+ */
+const getSpiderOffset = (lat, lng, index, total) => {
+    if (total <= 1) return [lat, lng];
+
+    // Raio do círculo de dispersão (aproximadamente 20-25 metros)
+    const radius = 0.00020;
+    const angle = (index / total) * 2 * Math.PI;
+
+    return [
+        lat + (Math.cos(angle) * radius),
+        lng + (Math.sin(angle) * radius)
+    ];
+};
+
 // Componente para voar até uma localização específica
 const FlyToLocation = ({ location }) => {
     const map = useMap();
@@ -211,8 +232,17 @@ const MapArea = ({ flyToLocation }) => {
 
                 const processedApiaries = apiariesData.map(api => {
                     let polygon = [];
-                    // Gera polígono padrão baseado nas coordenadas (visualização apenas)
-                    if (api.coord_X && api.coord_Y) {
+                    // Tenta carregar polígono real da Referencia, senão usa o padrão
+                    if (api.localizacao?.referencia) {
+                        try {
+                            const parsed = JSON.parse(api.localizacao.referencia);
+                            if (Array.isArray(parsed) && parsed.length >= 4) {
+                                polygon = parsed;
+                            }
+                        } catch (e) { }
+                    }
+
+                    if (polygon.length === 0 && api.coord_X && api.coord_Y) {
                         const lat = parseFloat(api.coord_Y);
                         const lng = parseFloat(api.coord_X);
                         if (!isNaN(lat) && !isNaN(lng)) {
@@ -258,11 +288,11 @@ const MapArea = ({ flyToLocation }) => {
                         apiarioId: hive.apiarioId || hive.apiario,
                         anoColmeia: hive.anoColmeia,
                         lat: hive.lat || hive.latitude,
-                        lng: hive.lng || hive.longitude
+                        lng: hive.lng || hive.longitude,
+                        status: hive.status
                     });
                 });
 
-                setHives(hivesData);
                 setHives(hivesData);
             } catch (error) {
                 console.error('❌ Erro ao carregar colmeias:', error);
@@ -312,68 +342,55 @@ const MapArea = ({ flyToLocation }) => {
                 ))}
 
                 {/* Renderiza marcadores para cada colmeia salva (apenas ativas) */}
-                {hives.map((hive) => {
-                    // Tenta obter as coordenadas da colmeia ou do apiário
-                    const hiveLat = parseCoordinate(hive.lat || hive.latitude);
-                    const hiveLng = parseCoordinate(hive.lng || hive.longitude);
+                {(() => {
+                    const activeHives = hives.filter(h => h.status === 1);
+                    return activeHives.map((hive) => {
+                        // Tenta obter as coordenadas da colmeia ou do apiário
+                        const hiveLat = parseCoordinate(hive.lat || hive.latitude);
+                        const hiveLng = parseCoordinate(hive.lng || hive.longitude);
 
-                    // Se não tem coordenadas próprias, tenta usar do apiário
-                    const apiary = apiaries.find(ap => String(ap.id) === String(hive.apiarioId || hive.apiario));
-                    const apLat = apiary ? parseCoordinate(apiary.coord_Y || apiary.latitude) : null;
-                    const apLng = apiary ? parseCoordinate(apiary.coord_X || apiary.longitude) : null;
+                        // Se não tem coordenadas próprias, tenta usar do apiário
+                        const apiarioId = hive.apiarioId || hive.apiario;
+                        const apiary = apiaries.find(ap => String(ap.id) === String(apiarioId));
+                        const apLat = apiary ? parseCoordinate(apiary.coord_Y || apiary.latitude) : null;
+                        const apLng = apiary ? parseCoordinate(apiary.coord_X || apiary.longitude) : null;
 
-                    const finalLat = hiveLat || apLat;
-                    const finalLng = hiveLng || apLng;
+                        let finalLat = hiveLat || apLat;
+                        let finalLng = hiveLng || apLng;
 
-                    // Debug: mostra por que colmeias não aparecem
-                    if (!isValidCoordinate(finalLat, finalLng)) {
-                        console.warn(
-                            `⚠️ Colmeia ${hive.id} sem coordenadas válidas:`,
-                            {
-                                hiveLat,
-                                hiveLng,
-                                apLat,
-                                apLng,
-                                apiarioId: hive.apiarioId || hive.apiario,
-                                apiarioEncontrado: !!apiary
-                            }
+                        // Validação de range
+                        if (!isValidCoordinate(finalLat, finalLng)) return null;
+
+                        // Aplica o deslocamento spider se houver múltiplas colmeias no mesmo apiário
+                        const hivesInSameApiary = activeHives.filter(h => String(h.apiarioId || h.apiario) === String(apiarioId));
+                        const hiveIndex = hivesInSameApiary.findIndex(h => h.id === hive.id);
+
+                        const [jitteredLat, jitteredLng] = getSpiderOffset(finalLat, finalLng, hiveIndex, hivesInSameApiary.length);
+
+                        return (
+                            <Marker
+                                key={`hive-${hive.id}`}
+                                position={[jitteredLat, jitteredLng]}
+                                icon={createHiveIcon()}
+                                title={`Colmeia ${hive.id} - ${hive.anoColmeia}`}
+                                eventHandlers={{
+                                    click: () => {
+                                        if (apiarioId) navigate(`/apiario/${apiarioId}`);
+                                    },
+                                    mouseover: (e) => e.target.openPopup(),
+                                    mouseout: (e) => e.target.closePopup()
+                                }}
+                            >
+                                <Popup>
+                                    <strong>Colmeia #{hive.id}</strong><br />
+                                    Apiário: {apiary?.nomeApelido || `ID ${apiarioId}`}<br />
+                                    Ano: {hive.anoColmeia}<br />
+                                    <em style={{ fontSize: '12px', color: '#666' }}>Clique para ver detalhes</em>
+                                </Popup>
+                            </Marker>
                         );
-                        return null;
-                    }
-
-                    console.log(`✅ Colmeia ${hive.id} renderizada em [${finalLat}, ${finalLng}]`);
-
-                    return (
-                        <Marker
-                            key={`hive-${hive.id}`}
-                            position={[finalLat, finalLng]}
-                            icon={createHiveIcon()}
-                            title={`Colmeia ${hive.id} - ${hive.anoColmeia}`}
-                            eventHandlers={{
-                                click: () => {
-                                    console.log(`🖱️ Clicou na colmeia ${hive.id}`);
-                                    if (hive.apiarioId || hive.apiario) {
-                                        navigate(`/apiario/${hive.apiarioId || hive.apiario}`);
-                                    }
-                                },
-                                mouseover: (e) => {
-                                    e.target.openPopup();
-                                },
-                                mouseout: (e) => {
-                                    e.target.closePopup();
-                                }
-                            }}
-                        >
-                            <Popup>
-                                <strong>Colmeia #{hive.id}</strong><br />
-                                Apiário: {apiary?.nomeApelido || `ID ${hive.apiarioId || hive.apiario}`}<br />
-                                Ano: {hive.anoColmeia}<br />
-                                Rainha: {hive.anoRainha || 'N/A'}<br />
-                                <em style={{ fontSize: '12px', color: '#666' }}>Clique para ver detalhes</em>
-                            </Popup>
-                        </Marker>
-                    );
-                })}
+                    });
+                })()}
             </MapContainer>
         </div>
     );

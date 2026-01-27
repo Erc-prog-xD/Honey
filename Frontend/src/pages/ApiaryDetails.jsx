@@ -1,19 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Polygon } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polygon, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { Trash2, Pencil, Power, ArrowLeft, Bug, Droplets, Calendar, MapPin, Hexagon, Plus } from 'lucide-react';
+import { Pencil, Power, ArrowLeft, Bug, Droplets, Calendar, MapPin, Hexagon, Plus } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import '../assets/css/ApiaryDetails.css';
-import { buscarApiarios, editarApiario, buscarColmeiasDoApiario, editarColmeia } from '../services/apiarioService';
+import { buscarApiarios, editarApiario, buscarColmeiasDoApiario, editarColmeia, buscarProducaoDoApiario } from '../services/apiarioService';
 
 // Components e Assets
 import Navbar from '../components/Navbar';
 import CustomSelect from '../components/CustomSelect';
 import ToastCenter from '../components/Toast';
-import beeIcon from '../assets/img/logo_hf.svg';
-import { createHiveIcon } from '../components/HiveMarker';
 import HiveStatCard from '../components/HiveStatCard';
+import { createHiveIcon } from '../components/HiveMarker';
+
+/**
+ * Calcula um deslocamento para evitar sobreposição de marcadores (efeito spider)
+ */
+const getSpiderOffset = (lat, lng, index, total) => {
+    if (total <= 1) return [lat, lng];
+    const radius = 0.00020;
+    const angle = (index / total) * 2 * Math.PI;
+    return [
+        lat + (Math.cos(angle) * radius),
+        lng + (Math.sin(angle) * radius)
+    ];
+};
 
 const customIcon = createHiveIcon();
 
@@ -51,24 +63,22 @@ const ApiaryDetails = () => {
             // Inverte o status: se active !== false (ou seja, true/undefined) vira 0 (Inativo), senão 1 (Ativo)
             const newStatus = hive.active !== false ? 0 : 1;
 
-            // Payload para API
+            // Payload exato conforme ColmeiaUpdateDTO.cs
             const payload = {
-                apiarioId: parseInt(hive.apiarioId || id),
                 anoColmeia: parseInt(hive.anoColmeia),
                 anoRainha: parseInt(hive.anoRainha || hive.anoColmeia),
-                status: newStatus,
-                tipoMel: hive.tipoMel || "Silvestre"
+                status: newStatus
             };
 
             await editarColmeia(hiveId, payload);
 
-            // Atualiza estado local
+            // Atualiza estado local sincronizado com o back
             setHives(prev => prev.map(h =>
-                h.id === hiveId ? { ...h, active: newStatus === 1, status: newStatus } : h
+                h.id === hiveId ? { ...h, status: newStatus, active: newStatus === 1 } : h
             ));
 
             if (selectedHive && selectedHive.id === hiveId) {
-                setSelectedHive(prev => ({ ...prev, active: newStatus === 1, status: newStatus }));
+                setSelectedHive(prev => ({ ...prev, status: newStatus, active: newStatus === 1 }));
             }
 
             showToast(`Colmeia ${newStatus === 1 ? 'ativada' : 'desativada'} com sucesso!`, 'success');
@@ -84,6 +94,31 @@ const ApiaryDetails = () => {
             handleToggleHive(selectedHive.id);
         }
     };
+
+    const handleHiveChange = (field, value) => {
+        setSelectedHive(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSaveHiveDetails = async () => {
+        if (!selectedHive) return;
+        try {
+            // Payload exato conforme ColmeiaUpdateDTO.cs
+            const payload = {
+                anoColmeia: parseInt(selectedHive.anoColmeia),
+                anoRainha: parseInt(selectedHive.anoRainha || selectedHive.anoColmeia),
+                status: selectedHive.status !== undefined ? selectedHive.status : (selectedHive.active !== false ? 1 : 0)
+            };
+
+            await editarColmeia(selectedHive.id, payload);
+
+            setHives(prev => prev.map(h => h.id === selectedHive.id ? selectedHive : h));
+            showToast('Dados da colmeia atualizados!', 'success');
+        } catch (error) {
+            console.error("Erro ao salvar colmeia:", error);
+            showToast("Erro ao atualizar dados da colmeia.", "error");
+        }
+    };
+
 
     useEffect(() => {
         const loadData = async () => {
@@ -102,13 +137,21 @@ const ApiaryDetails = () => {
                         // Mapeia campos da API para o state local se necessário
                         nomeApelido: foundApiary.localizacao?.descricaoLocal || 'Apiário Sem Nome',
                         tipoAbelha: foundApiary.tipoDeAbelha,
-                        // Gera polígono padrão baseado nas coordenadas
-                        polygon: (foundApiary.coord_X && foundApiary.coord_Y) ? [
-                            { lat: parseFloat(foundApiary.coord_Y) + 0.001, lng: parseFloat(foundApiary.coord_X) - 0.001 },
-                            { lat: parseFloat(foundApiary.coord_Y) + 0.001, lng: parseFloat(foundApiary.coord_X) + 0.001 },
-                            { lat: parseFloat(foundApiary.coord_Y) - 0.001, lng: parseFloat(foundApiary.coord_X) + 0.001 },
-                            { lat: parseFloat(foundApiary.coord_Y) - 0.001, lng: parseFloat(foundApiary.coord_X) - 0.001 }
-                        ] : []
+                        // Tenta carregar polígono real da Referencia, senão usa o padrão
+                        polygon: (() => {
+                            if (foundApiary.localizacao?.referencia) {
+                                try {
+                                    const parsed = JSON.parse(foundApiary.localizacao.referencia);
+                                    if (Array.isArray(parsed) && parsed.length >= 4) return parsed;
+                                } catch (e) { }
+                            }
+                            return (foundApiary.coord_X && foundApiary.coord_Y) ? [
+                                { lat: parseFloat(foundApiary.coord_Y) + 0.001, lng: parseFloat(foundApiary.coord_X) - 0.001 },
+                                { lat: parseFloat(foundApiary.coord_Y) + 0.001, lng: parseFloat(foundApiary.coord_X) + 0.001 },
+                                { lat: parseFloat(foundApiary.coord_Y) - 0.001, lng: parseFloat(foundApiary.coord_X) + 0.001 },
+                                { lat: parseFloat(foundApiary.coord_Y) - 0.001, lng: parseFloat(foundApiary.coord_X) - 0.001 }
+                            ] : [];
+                        })()
                     });
 
                     setFormData({
@@ -124,7 +167,24 @@ const ApiaryDetails = () => {
                 if (colmeiasApi && !Array.isArray(colmeiasApi) && Array.isArray(colmeiasApi.dados)) {
                     colmeiasApi = colmeiasApi.dados;
                 }
-                setHives(Array.isArray(colmeiasApi) ? colmeiasApi : []);
+                const mappedHives = (Array.isArray(colmeiasApi) ? colmeiasApi : []).map(h => ({
+                    ...h,
+                    active: h.status === 1 // Garante que a UI use a prop 'active' baseada no status real do back
+                }));
+                setHives(mappedHives);
+
+                // 3. Buscar Produção
+                try {
+                    const producao = await buscarProducaoDoApiario(id);
+                    if (producao?.dados) {
+                        setFormData(prev => ({
+                            ...prev,
+                            volumeProduzido: producao.dados.totalProduzidoKg || '0'
+                        }));
+                    }
+                } catch (e) {
+                    console.warn("Erro ao buscar produção:", e);
+                }
 
             } catch (error) {
                 console.error("Erro ao carregar dados:", error);
@@ -162,7 +222,16 @@ const ApiaryDetails = () => {
 
             await editarApiario(id, payload);
 
-            setApiary(prev => ({ ...prev, ...updatedData }));
+            // Atualiza o estado local do apiário preservando o que já existe
+            setApiary(prev => ({
+                ...prev,
+                ...updatedData,
+                localizacao: {
+                    ...prev.localizacao,
+                    descricaoLocal: updatedData.nomeApelido || prev.localizacao?.descricaoLocal
+                }
+            }));
+
             // Mantém formData sincronizado
             setFormData(prev => ({ ...prev, ...updatedData }));
 
@@ -284,6 +353,24 @@ const ApiaryDetails = () => {
                         />
                     )}
                     <Marker position={getPolygonCenter()} icon={customIcon} />
+
+                    {/* Mostra apenas colmeias com status Ativa (1) no mapa com efeito spider */}
+                    {(() => {
+                        const activeHives = hives.filter(h => h.status === 1);
+                        const center = getPolygonCenter();
+                        return activeHives.map((hive, index) => {
+                            const [jLat, jLng] = getSpiderOffset(center[0], center[1], index, activeHives.length);
+                            return (
+                                <Marker
+                                    key={hive.id}
+                                    position={[jLat, jLng]}
+                                    icon={createHiveIcon()}
+                                >
+                                    <Popup>Colmeia {hives.indexOf(hive) + 1}</Popup>
+                                </Marker>
+                            );
+                        });
+                    })()}
                 </MapContainer>
             </div>
 
@@ -407,23 +494,40 @@ const ApiaryDetails = () => {
                                     <label>
                                         Ano da colmeia
                                     </label>
-                                    <input type="text" value={selectedHive.anoColmeia || ''} readOnly className="readonly" />
+                                    <input
+                                        type="number"
+                                        value={selectedHive.anoColmeia || ''}
+                                        onChange={(e) => handleHiveChange('anoColmeia', e.target.value)}
+                                    />
                                 </div>
 
                                 <div className="input-group">
                                     <label>
                                         Ano da rainha
                                     </label>
-                                    <input type="text" value={selectedHive.anoRainha || ''} readOnly className="readonly" />
+                                    <input
+                                        type="number"
+                                        value={selectedHive.anoRainha || ''}
+                                        onChange={(e) => handleHiveChange('anoRainha', e.target.value)}
+                                    />
                                 </div>
                                 <div className="input-group">
                                     <label>
                                         Tipo de mel
                                     </label>
-                                    <input type="text" value={selectedHive.tipoMel || ''} readOnly className="readonly" />
+                                    <CustomSelect
+                                        options={honeyTypes.map(type => ({ value: type, label: type }))}
+                                        value={selectedHive.tipoMel}
+                                        onChange={(val) => handleHiveChange('tipoMel', val)}
+                                        placeholder="Selecione o tipo"
+                                    />
                                 </div>
 
                                 <div className="hive-panel-actions">
+                                    <button className="btn-action-panel" onClick={handleSaveHiveDetails} style={{ backgroundColor: 'var(--hf-primary)', color: 'var(--hf-text-main)' }}>
+                                        <Pencil size={16} />
+                                        Salvar
+                                    </button>
                                     {selectedHive.active !== false && (
                                         <button
                                             className="btn-action-panel deactivate"
