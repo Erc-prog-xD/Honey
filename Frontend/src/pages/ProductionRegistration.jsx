@@ -9,6 +9,7 @@ import ActionButtons from '../components/ActionButtons';
 import ToastCenter from '../components/Toast';
 import CustomSelect from '../components/CustomSelect';
 import CustomCalendar from '../components/CustomCalendar';
+import { buscarApiarios, registrarMovimentacao, buscarColmeiasDoApiario, buscarTiposMel } from '../services/apiarioService';
 
 const ProductionRegistration = () => {
     const navigate = useNavigate();
@@ -16,67 +17,84 @@ const ProductionRegistration = () => {
     const [apiaries, setApiaries] = useState([]);
     const [honeyTypes, setHoneyTypes] = useState([]);
     const [showCalendar, setShowCalendar] = useState(false);
+    const [loading, setLoading] = useState(false);
     const calendarRef = useRef(null);
 
     const [formData, setFormData] = useState({
-        apiario: '',
+        apiarioId: '',
         volumeLitros: '',
         dataExtracao: new Date(),
         tipoMel: ''
     });
 
-    // Carrega apiários e tipos de mel do localStorage
-    useEffect(() => {
-        const storedApiaries = JSON.parse(localStorage.getItem('hf_apiaries') || '[]');
-        setApiaries(storedApiaries);
-
-        const storedHoneyTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
-        setHoneyTypes(storedHoneyTypes);
-    }, []);
-
     const showToast = (message, type) => {
         setToast({ message, type });
     };
+
+    // Carrega apiários e tipos de mel da API
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const response = await buscarApiarios();
+                const apiariesData = Array.isArray(response) ? response : (response?.dados || []);
+                setApiaries(apiariesData);
+                setHoneyTypes(buscarTiposMel());
+            } catch (error) {
+                console.error('Erro ao buscar apiários:', error);
+                showToast('Erro ao carregar apiários', 'error');
+            }
+        };
+        loadData();
+    }, []);
 
     const handleBack = () => {
         navigate('/dashboard');
     };
 
-    const handleSave = () => {
-        if (!formData.apiario || !formData.volumeLitros || !formData.dataExtracao) {
+    const handleSave = async () => {
+        if (!formData.apiarioId || !formData.volumeLitros || !formData.dataExtracao) {
             showToast('Por favor, preencha todos os campos.', 'error');
             return;
         }
 
         // Verifica se o apiário tem colmeias
-        const storedHives = JSON.parse(localStorage.getItem('hf_hives') || '[]');
-        const apiaryHives = storedHives.filter(h => String(h.apiario) === String(formData.apiario));
+        try {
+            const hives = await buscarColmeiasDoApiario(formData.apiarioId);
+            const hivesArray = Array.isArray(hives) ? hives : (hives?.dados || []);
 
-        if (apiaryHives.length === 0) {
-            showToast('Não é possível registrar produção para um apiário sem colmeias.', 'error');
+            if (hivesArray.length === 0) {
+                showToast('Não é possível registrar produção para um apiário sem colmeias.', 'error');
+                return;
+            }
+        } catch (error) {
+            showToast('Erro ao verificar colmeias.', 'error');
             return;
         }
 
-        const newProduction = {
-            id: Date.now(),
-            ...formData,
-            dataExtracao: formData.dataExtracao instanceof Date ? formData.dataExtracao.toISOString() : formData.dataExtracao,
-            createdAt: new Date().toISOString()
+        const payload = {
+            tipo: 1, // Colheita
+            quantidadeKg: parseFloat(formData.volumeLitros),
+            data: formData.dataExtracao instanceof Date ? formData.dataExtracao.toISOString().split('T')[0] : formData.dataExtracao,
+            observacao: `Tipo de mel: ${formData.tipoMel}`
         };
 
         try {
-            const existingProductions = JSON.parse(localStorage.getItem('hf_productions') || '[]');
-            const updatedProductions = [...existingProductions, newProduction];
-            localStorage.setItem('hf_productions', JSON.stringify(updatedProductions));
+            setLoading(true);
+            const response = await registrarMovimentacao(formData.apiarioId, payload);
 
-            showToast('Produção registrada com sucesso!', 'success');
-
-            setTimeout(() => {
-                navigate('/dashboard');
-            }, 1500);
+            if (response?.sucesso || response?.success || response?.dados) {
+                showToast('Produção registrada com sucesso!', 'success');
+                setTimeout(() => {
+                    navigate('/dashboard');
+                }, 1500);
+            } else {
+                showToast('Erro ao registrar produção.', 'error');
+            }
         } catch (error) {
-            console.error("Error saving to localStorage:", error);
+            console.error('Erro ao salvar produção:', error);
             showToast('Erro ao salvar os dados. Tente novamente.', 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -110,7 +128,7 @@ const ProductionRegistration = () => {
                     <div className="title-box">
                         <h1>Registro de Produção</h1>
                     </div>
-                    <ActionButtons onCancel={handleBack} onSave={handleSave} />
+                    <ActionButtons onCancel={handleBack} onSave={handleSave} loading={loading} />
                 </div>
 
                 <div className="reg-full-width">
@@ -125,8 +143,8 @@ const ProductionRegistration = () => {
                                         value: String(ap.id),
                                         label: ap.nomeApelido
                                     }))}
-                                    value={formData.apiario}
-                                    onChange={(val) => setFormData({ ...formData, apiario: val })}
+                                    value={formData.apiarioId}
+                                    onChange={(val) => setFormData({ ...formData, apiarioId: val })}
                                     placeholder="Selecione o apiário"
                                 />
                                 <button className="add-apiary-btn" onClick={() => navigate('/cadastro-apiario')}>+</button>
@@ -146,10 +164,7 @@ const ProductionRegistration = () => {
                         <div className="input-group">
                             <label>Tipo de mel <span className="required-star">*</span></label>
                             <CustomSelect
-                                options={honeyTypes.map(type => ({
-                                    value: type,
-                                    label: type
-                                }))}
+                                options={honeyTypes}
                                 value={formData.tipoMel}
                                 onChange={(val) => setFormData({ ...formData, tipoMel: val })}
                                 placeholder="Selecione o tipo de mel"

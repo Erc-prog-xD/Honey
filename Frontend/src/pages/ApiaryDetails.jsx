@@ -6,6 +6,7 @@ import { Pencil, Power, ArrowLeft, Bug, Droplets, Calendar, MapPin, Hexagon, Plu
 import 'leaflet/dist/leaflet.css';
 import '../assets/css/ApiaryDetails.css';
 import { buscarApiarios, editarApiario, buscarColmeiasDoApiario, editarColmeia, buscarProducaoDoApiario } from '../services/apiarioService';
+import beeIcon from '../assets/img/Beehive.svg';
 
 // Components e Assets
 import Navbar from '../components/Navbar';

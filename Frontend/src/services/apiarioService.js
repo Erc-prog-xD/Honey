@@ -78,3 +78,18 @@ export const deletarColmeia = (colmeiaId) =>
 // Buscar produção do apiário
 export const buscarProducaoDoApiario = (apiarioId) =>
     apiFetch(`/api/Producao/BuscarProducaoDoApiario?apiarioId=${apiarioId}`);
+
+// Criar nova produção
+export const criarProducao = (dadosProducao) =>
+    apiFetch('/api/apiarios/' + dadosProducao.apiarioId + '/movimentacoes', {
+        method: 'POST',
+        body: JSON.stringify(dadosProducao)
+    });
+
+// Buscar tipos de mel
+export const buscarTiposMel = () => [
+    { value: 'FloralSilvestral', label: 'Floral Silvestre' },
+    { value: 'Eucalipto', label: 'Eucalipto' },
+    { value: 'Laranja', label: 'Laranja' },
+    { value: 'Acacia', label: 'Acácia' }
+];

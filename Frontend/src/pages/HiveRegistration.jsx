@@ -268,6 +268,8 @@ const HiveRegistration = () => {
     };
 
 
+    const [loading, setLoading] = useState(false);
+
     const handleSave = async () => {
         // Validação de campos obrigatórios
         if (!formData.apiario) {
@@ -278,24 +280,16 @@ const HiveRegistration = () => {
             showToast('Por favor, informe o ano da colmeia.', 'error');
             return;
         }
-        // Validação de coordenadas opcional dependendo da regra de negócio, 
-        // mas como a tela pede clique no mapa, vamos manter.
-        // Nota: A API CriarColmeia no exemplo do swagger não pede coordenadas explicitas no corpo, 
-        // pede apenas: apiarioId, anoColmeia, anoRainha, status.
-        // Se precisar de coordenadas, precisaremos ver se a API foi atualizada ou se isso vai no 'observacao' ou outro lugar.
-        // Pelo Swagger enviado: { "apiarioId": 0, "anoColmeia": 0, "anoRainha": 0, "status": 0 }
-
-        // Vamos enviar o básico para funcionar com o endpoint fornecido.
 
         const payload = {
-            apiarioId: parseInt(formData.apiario),
-            anoColmeia: parseInt(formData.anoColmeia),
-            anoRainha: parseInt(formData.anoRainha) || parseInt(formData.anoColmeia), // Default se vazio
-            status: 1, // 1 = Ativa (Exemplo)
-            tipoMel: formData.tipoMel // Se a API aceitar, senão será ignorado (o swagger não mostrou, mas é bom tentar)
+            ApiarioId: parseInt(formData.apiario),
+            AnoColmeia: parseInt(formData.anoColmeia),
+            AnoRainha: parseInt(formData.anoRainha) || parseInt(formData.anoColmeia),
+            Status: 1 // Ativa
         };
 
         try {
+            setLoading(true);
             await criarColmeia(payload);
 
             showToast('Colmeia cadastrada com sucesso!', 'success');
@@ -307,6 +301,8 @@ const HiveRegistration = () => {
         } catch (error) {
             console.error("Erro ao salvar colmeia:", error);
             showToast('Erro ao salvar colmeia na API.', 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -319,7 +315,7 @@ const HiveRegistration = () => {
                     <div className="title-box">
                         <h1>Cadastro de colmeia</h1>
                     </div>
-                    <ActionButtons onCancel={handleBack} onSave={handleSave} />
+                    <ActionButtons onCancel={handleBack} onSave={handleSave} loading={loading} />
                 </div>
 
                 <div className="reg-grid">

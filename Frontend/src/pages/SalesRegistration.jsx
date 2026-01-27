@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import '../assets/css/HiveRegistration.css';
 
 // Components
@@ -9,24 +9,38 @@ import ActionButtons from '../components/ActionButtons';
 import ToastCenter from '../components/Toast';
 import CustomSelect from '../components/CustomSelect';
 import CustomCalendar from '../components/CustomCalendar';
+import { buscarApiarios, registrarMovimentacao, buscarTiposMel } from '../services/apiarioService';
 
 const SalesRegistration = () => {
     const navigate = useNavigate();
     const [toast, setToast] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [apiaries, setApiaries] = useState([]);
     const [showCalendar, setShowCalendar] = useState(false);
     const calendarRef = useRef(null);
     const [honeyTypes, setHoneyTypes] = useState([]);
     const [formData, setFormData] = useState({
+        apiarioId: '',
         volumeVendido: '',
         valorTotal: '',
         dataVenda: new Date(),
         tipoMel: ''
     });
 
-    // Carrega tipos de mel do localStorage
+    // Carrega apiários e tipos de mel da API
     useEffect(() => {
-        const storedHoneyTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
-        setHoneyTypes(storedHoneyTypes);
+        const loadData = async () => {
+            try {
+                const response = await buscarApiarios();
+                const apiariesData = Array.isArray(response) ? response : (response?.dados || []);
+                setApiaries(apiariesData);
+                setHoneyTypes(buscarTiposMel());
+            } catch (error) {
+                console.error('Erro ao buscar apiários:', error);
+                showToast('Erro ao carregar apiários', 'error');
+            }
+        };
+        loadData();
     }, []);
 
     const showToast = (message, type) => {
@@ -37,41 +51,37 @@ const SalesRegistration = () => {
         navigate('/dashboard');
     };
 
-    const handleSave = () => {
-        if (!formData.volumeVendido || !formData.valorTotal || !formData.dataVenda) {
+    const handleSave = async () => {
+        if (!formData.apiarioId || !formData.volumeVendido || !formData.valorTotal || !formData.dataVenda) {
             showToast('Por favor, preencha todos os campos.', 'error');
             return;
         }
 
-        const newSale = {
-            id: Date.now(),
-            ...formData,
-            dataVenda: formData.dataVenda instanceof Date ? formData.dataVenda.toISOString() : formData.dataVenda,
-            createdAt: new Date().toISOString()
+        const payload = {
+            tipo: 2, // Venda
+            quantidadeKg: parseFloat(formData.volumeVendido),
+            valor: parseFloat(formData.valorTotal),
+            data: formData.dataVenda instanceof Date ? formData.dataVenda.toISOString().split('T')[0] : formData.dataVenda,
+            observacao: `Tipo de mel: ${formData.tipoMel}`
         };
 
         try {
-            const existingSales = JSON.parse(localStorage.getItem('hf_sales') || '[]');
-            const updatedSales = [...existingSales, newSale];
-            localStorage.setItem('hf_sales', JSON.stringify(updatedSales));
+            setLoading(true);
+            const response = await registrarMovimentacao(formData.apiarioId, payload);
 
-            // Salva novo tipo de mel se não existir
-            if (formData.tipoMel && formData.tipoMel.trim()) {
-                const existingTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
-                if (!existingTypes.includes(formData.tipoMel.trim())) {
-                    const updatedTypes = [...existingTypes, formData.tipoMel.trim()];
-                    localStorage.setItem('hf_honey_types', JSON.stringify(updatedTypes));
-                }
+            if (response?.sucesso || response?.success || response?.dados || response?.status) {
+                showToast('Venda registrada com sucesso!', 'success');
+                setTimeout(() => {
+                    navigate('/dashboard');
+                }, 1500);
+            } else {
+                showToast(response?.mensage || 'Erro ao registrar venda. Verifique se há estoque.', 'error');
             }
-
-            showToast('Venda registrada com sucesso!', 'success');
-
-            setTimeout(() => {
-                navigate('/dashboard');
-            }, 1500);
         } catch (error) {
-            console.error("Error saving to localStorage:", error);
+            console.error('Erro ao salvar venda:', error);
             showToast('Erro ao salvar os dados. Tente novamente.', 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -105,7 +115,7 @@ const SalesRegistration = () => {
                     <div className="title-box">
                         <h1>Registro de Vendas</h1>
                     </div>
-                    <ActionButtons onCancel={handleBack} onSave={handleSave} />
+                    <ActionButtons onCancel={handleBack} onSave={handleSave} loading={loading} />
                 </div>
 
                 <div className="reg-full-width">
@@ -113,7 +123,23 @@ const SalesRegistration = () => {
                         <h2>Informações gerais</h2>
 
                         <div className="input-group">
-                            <label>Volume vendido (L) <span className="required-star">*</span></label>
+                            <label>Selecione o apiário <span className="required-star">*</span></label>
+                            <div className="select-with-btn">
+                                <CustomSelect
+                                    options={apiaries.map(ap => ({
+                                        value: String(ap.id),
+                                        label: ap.nomeApelido
+                                    }))}
+                                    value={formData.apiarioId}
+                                    onChange={(val) => setFormData({ ...formData, apiarioId: val })}
+                                    placeholder="Selecione o apiário"
+                                />
+                                <button className="add-apiary-btn" onClick={() => navigate('/cadastro-apiario')}>+</button>
+                            </div>
+                        </div>
+
+                        <div className="input-group">
+                            <label>Volume vendido (Kg) <span className="required-star">*</span></label>
                             <input
                                 type="number"
                                 placeholder="0.00"
@@ -125,10 +151,7 @@ const SalesRegistration = () => {
                         <div className="input-group">
                             <label>Tipo de mel <span className="required-star">*</span></label>
                             <CustomSelect
-                                options={honeyTypes.map(type => ({
-                                    value: type,
-                                    label: type
-                                }))}
+                                options={honeyTypes}
                                 value={formData.tipoMel}
                                 onChange={(val) => setFormData({ ...formData, tipoMel: val })}
                                 placeholder="Selecione o tipo de mel"
