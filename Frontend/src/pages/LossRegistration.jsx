@@ -1,3 +1,4 @@
+import { buscarApiarios, registrarMovimentacao, buscarTiposMel } from '../services/apiarioService';
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -15,18 +16,35 @@ const LossRegistration = () => {
     const [toast, setToast] = useState(null);
     const [showCalendar, setShowCalendar] = useState(false);
     const calendarRef = useRef(null);
+    const [apiaries, setApiaries] = useState([]);
     const [honeyTypes, setHoneyTypes] = useState([]);
     const [formData, setFormData] = useState({
+        apiarioId: '',
         volumePerdido: '',
         dataPerda: new Date(),
         razaoMotivo: '',
         tipoMel: ''
     });
 
-    // Carrega tipos de mel do localStorage
+    // Carrega apiários e tipos de mel da API
     useEffect(() => {
-        const storedHoneyTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
-        setHoneyTypes(storedHoneyTypes);
+        const loadData = async () => {
+            try {
+                const response = await buscarApiarios();
+                let apiariesData = [];
+                if (Array.isArray(response)) {
+                    apiariesData = response;
+                } else if (response?.dados && Array.isArray(response.dados)) {
+                    apiariesData = response.dados;
+                }
+                setApiaries(apiariesData);
+                setHoneyTypes(buscarTiposMel());
+            } catch (error) {
+                console.error('Erro ao buscar apiários:', error);
+                showToast('Erro ao carregar apiários', 'error');
+            }
+        };
+        loadData();
     }, []);
 
     const showToast = (message, type) => {
@@ -37,40 +55,32 @@ const LossRegistration = () => {
         navigate('/dashboard');
     };
 
-    const handleSave = () => {
-        if (!formData.volumePerdido || !formData.dataPerda || !formData.razaoMotivo) {
+    const handleSave = async () => {
+        if (!formData.apiarioId || !formData.volumePerdido || !formData.dataPerda || !formData.razaoMotivo) {
             showToast('Por favor, preencha todos os campos.', 'error');
             return;
         }
 
-        const newLoss = {
-            id: Date.now(),
-            ...formData,
-            dataPerda: formData.dataPerda.toISOString(),
-            createdAt: new Date().toISOString()
+        const payload = {
+            tipo: 3, // Perda
+            quantidadeKg: parseFloat(formData.volumePerdido),
+            valor: 0,
+            data: formData.dataPerda instanceof Date ? formData.dataPerda.toISOString().split('T')[0] : formData.dataPerda,
+            observacao: `Motivo: ${formData.razaoMotivo} | Tipo de mel: ${formData.tipoMel}`
         };
 
         try {
-            const existingLosses = JSON.parse(localStorage.getItem('hf_losses') || '[]');
-            const updatedLosses = [...existingLosses, newLoss];
-            localStorage.setItem('hf_losses', JSON.stringify(updatedLosses));
-
-            // Salva novo tipo de mel se não existir
-            if (formData.tipoMel && formData.tipoMel.trim()) {
-                const existingTypes = JSON.parse(localStorage.getItem('hf_honey_types') || '[]');
-                if (!existingTypes.includes(formData.tipoMel.trim())) {
-                    const updatedTypes = [...existingTypes, formData.tipoMel.trim()];
-                    localStorage.setItem('hf_honey_types', JSON.stringify(updatedTypes));
-                }
+            const response = await registrarMovimentacao(formData.apiarioId, payload);
+            if (response?.status === true) {
+                showToast(response?.mensage || 'Perda registrada com sucesso!', 'success');
+                setTimeout(() => {
+                    navigate('/dashboard');
+                }, 1500);
+            } else {
+                showToast(response?.mensage || 'Erro ao registrar perda.', 'error');
             }
-
-            showToast('Perda registrada com sucesso!', 'success');
-
-            setTimeout(() => {
-                navigate('/dashboard');
-            }, 1500);
         } catch (error) {
-            console.error("Error saving to localStorage:", error);
+            console.error('Erro ao salvar perda:', error);
             showToast('Erro ao salvar os dados. Tente novamente.', 'error');
         }
     };
@@ -111,7 +121,28 @@ const LossRegistration = () => {
                         <h2>Informações da Perda</h2>
 
                         <div className="input-group">
-                            <label>Volume perdido (L) <span className="required-star">*</span></label>
+                            <label>Selecione o apiário <span className="required-star">*</span></label>
+                            <div className="select-with-btn">
+                                <CustomSelect
+                                    options={
+                                        apiaries.length > 0
+                                            ? apiaries.map(ap => ({
+                                                value: String(ap.id),
+                                                label: ap.nomeApelido || ap.nome || `Apiário #${ap.id}`
+                                            }))
+                                            : [{ value: '', label: 'Nenhum apiário cadastrado' }]
+                                    }
+                                    value={formData.apiarioId}
+                                    onChange={(val) => setFormData({ ...formData, apiarioId: val })}
+                                    placeholder={apiaries.length === 0 ? 'Nenhum apiário cadastrado' : 'Selecione o apiário'}
+                                    disabled={apiaries.length === 0}
+                                />
+                                <button className="add-apiary-btn" onClick={() => navigate('/cadastro-apiario')}>+</button>
+                            </div>
+                        </div>
+
+                        <div className="input-group">
+                            <label>Volume perdido (Kg) <span className="required-star">*</span></label>
                             <input
                                 type="number"
                                 placeholder="0.00"
@@ -123,10 +154,15 @@ const LossRegistration = () => {
                         <div className="input-group">
                             <label>Tipo de mel <span className="required-star">*</span></label>
                             <CustomSelect
-                                options={honeyTypes.map(type => ({
-                                    value: type,
-                                    label: type
-                                }))}
+                                options={
+                                    Array.isArray(honeyTypes)
+                                        ? honeyTypes.map(type =>
+                                            typeof type === 'object' && type.value && type.label
+                                                ? type
+                                                : { value: String(type), label: String(type) }
+                                        )
+                                        : []
+                                }
                                 value={formData.tipoMel}
                                 onChange={(val) => setFormData({ ...formData, tipoMel: val })}
                                 placeholder="Selecione o tipo de mel"

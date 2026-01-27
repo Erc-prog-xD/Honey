@@ -1,3 +1,9 @@
+// Registrar movimentação de produção (colheita)
+export const registrarMovimentacao = (apiarioId, payload) =>
+    apiFetch(`/api/apiarios/${apiarioId}/movimentacoes`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    });
 import { apiFetch } from './api';
 
 // Buscar apiários do usuário logado

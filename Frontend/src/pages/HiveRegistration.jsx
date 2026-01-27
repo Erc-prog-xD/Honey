@@ -315,7 +315,7 @@ const HiveRegistration = () => {
                     <div className="title-box">
                         <h1>Cadastro de colmeia</h1>
                     </div>
-                    <ActionButtons onCancel={handleBack} onSave={handleSave} loading={loading} />
+                    <ActionButtons onCancel={handleBack} onSave={handleSave} loading={loading} disabled={apiaries.length === 0 || !coords.lat || !coords.lng} />
                 </div>
 
                 <div className="reg-grid">
@@ -326,15 +326,25 @@ const HiveRegistration = () => {
                             <label>Selecione o apiário <span style={{ color: 'red' }}>*</span></label>
                             <div className="select-with-btn">
                                 <CustomSelect
-                                    options={apiaries.map(ap => ({
-                                        value: String(ap.id),
-                                        label: ap.nomeApelido
-                                    }))}
+                                    options={
+                                        apiaries.length > 0
+                                            ? apiaries.map(ap => ({
+                                                value: String(ap.id),
+                                                label: ap.nomeApelido
+                                            }))
+                                            : [{ value: '', label: 'Nenhum apiário cadastrado' }]
+                                    }
                                     value={formData.apiario}
                                     onChange={(val) => setFormData({ ...formData, apiario: val })}
-                                    placeholder="Selecione o apiário"
+                                    placeholder={apiaries.length === 0 ? 'Nenhum apiário cadastrado' : 'Selecione o apiário'}
+                                    disabled={apiaries.length === 0}
                                 />
                                 <button className="add-apiary-btn" onClick={() => navigate('/cadastro-apiario')}>+</button>
+                                {apiaries.length === 0 && (
+                                    <div style={{ color: '#b91c1c', marginTop: 8 }}>
+                                        Cadastre um apiário antes de criar colmeias.
+                                    </div>
+                                )}
                             </div>
                         </div>
 

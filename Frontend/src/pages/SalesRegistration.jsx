@@ -32,7 +32,12 @@ const SalesRegistration = () => {
         const loadData = async () => {
             try {
                 const response = await buscarApiarios();
-                const apiariesData = Array.isArray(response) ? response : (response?.dados || []);
+                let apiariesData = [];
+                if (Array.isArray(response)) {
+                    apiariesData = response;
+                } else if (response?.dados && Array.isArray(response.dados)) {
+                    apiariesData = response.dados;
+                }
                 setApiaries(apiariesData);
                 setHoneyTypes(buscarTiposMel());
             } catch (error) {
@@ -68,9 +73,8 @@ const SalesRegistration = () => {
         try {
             setLoading(true);
             const response = await registrarMovimentacao(formData.apiarioId, payload);
-
-            if (response?.sucesso || response?.success || response?.dados || response?.status) {
-                showToast('Venda registrada com sucesso!', 'success');
+            if (response?.status === true) {
+                showToast(response?.mensage || 'Venda registrada com sucesso!', 'success');
                 setTimeout(() => {
                     navigate('/dashboard');
                 }, 1500);
@@ -126,13 +130,18 @@ const SalesRegistration = () => {
                             <label>Selecione o apiário <span className="required-star">*</span></label>
                             <div className="select-with-btn">
                                 <CustomSelect
-                                    options={apiaries.map(ap => ({
-                                        value: String(ap.id),
-                                        label: ap.nomeApelido
-                                    }))}
+                                    options={
+                                        apiaries.length > 0
+                                            ? apiaries.map(ap => ({
+                                                value: String(ap.id),
+                                                label: ap.nomeApelido || ap.nome || `Apiário #${ap.id}`
+                                            }))
+                                            : [{ value: '', label: 'Nenhum apiário cadastrado' }]
+                                    }
                                     value={formData.apiarioId}
                                     onChange={(val) => setFormData({ ...formData, apiarioId: val })}
-                                    placeholder="Selecione o apiário"
+                                    placeholder={apiaries.length === 0 ? 'Nenhum apiário cadastrado' : 'Selecione o apiário'}
+                                    disabled={apiaries.length === 0}
                                 />
                                 <button className="add-apiary-btn" onClick={() => navigate('/cadastro-apiario')}>+</button>
                             </div>
@@ -151,7 +160,15 @@ const SalesRegistration = () => {
                         <div className="input-group">
                             <label>Tipo de mel <span className="required-star">*</span></label>
                             <CustomSelect
-                                options={honeyTypes}
+                                options={
+                                    Array.isArray(honeyTypes)
+                                        ? honeyTypes.map(type =>
+                                            typeof type === 'object' && type.value && type.label
+                                                ? type
+                                                : { value: String(type), label: String(type) }
+                                        )
+                                        : []
+                                }
                                 value={formData.tipoMel}
                                 onChange={(val) => setFormData({ ...formData, tipoMel: val })}
                                 placeholder="Selecione o tipo de mel"

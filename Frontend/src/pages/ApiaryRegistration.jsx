@@ -189,7 +189,15 @@ const ApiaryRegistration = () => {
                     <div className="title-box">
                         <h1>Cadastro de apiário</h1>
                     </div>
-                    <ActionButtons onCancel={handleBack} onSave={handleSave} />
+                    <ActionButtons
+                        onCancel={handleBack}
+                        onSave={handleSave}
+                        disabled={
+                            !formData.nomeApelido ||
+                            !formData.tipoAbelha ||
+                            polygonCoords.length < 4
+                        }
+                    />
                 </div>
 
                 <div className="reg-grid">
