@@ -5,7 +5,7 @@ import L from 'leaflet';
 import { Trash2, Pencil, Power, ArrowLeft, Bug, Droplets, Calendar, MapPin, Hexagon, Plus } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import '../assets/css/ApiaryDetails.css';
-import { buscarApiarios, editarApiario, buscarColmeiasDoApiario } from '../services/apiarioService';
+import { buscarApiarios, editarApiario, buscarColmeiasDoApiario, editarColmeia } from '../services/apiarioService';
 
 // Components e Assets
 import Navbar from '../components/Navbar';
@@ -43,11 +43,45 @@ const ApiaryDetails = () => {
         setSelectedHive(null);
     };
 
+    const handleToggleHive = async (hiveId) => {
+        try {
+            const hive = hives.find(h => h.id === hiveId);
+            if (!hive) return;
+
+            // Inverte o status: se active !== false (ou seja, true/undefined) vira 0 (Inativo), senão 1 (Ativo)
+            const newStatus = hive.active !== false ? 0 : 1;
+
+            // Payload para API
+            const payload = {
+                apiarioId: parseInt(hive.apiarioId || id),
+                anoColmeia: parseInt(hive.anoColmeia),
+                anoRainha: parseInt(hive.anoRainha || hive.anoColmeia),
+                status: newStatus,
+                tipoMel: hive.tipoMel || "Silvestre"
+            };
+
+            await editarColmeia(hiveId, payload);
+
+            // Atualiza estado local
+            setHives(prev => prev.map(h =>
+                h.id === hiveId ? { ...h, active: newStatus === 1, status: newStatus } : h
+            ));
+
+            if (selectedHive && selectedHive.id === hiveId) {
+                setSelectedHive(prev => ({ ...prev, active: newStatus === 1, status: newStatus }));
+            }
+
+            showToast(`Colmeia ${newStatus === 1 ? 'ativada' : 'desativada'} com sucesso!`, 'success');
+
+        } catch (error) {
+            console.error("Erro ao alterar status da colmeia:", error);
+            showToast("Erro ao atualizar status da colmeia.", "error");
+        }
+    };
+
     const handleModalToggleActive = () => {
         if (selectedHive) {
-            // Lógica simplificada de toggle por enquanto, já que o foco é Apiário
             handleToggleHive(selectedHive.id);
-            setSelectedHive(prev => ({ ...prev, active: !prev.active }));
         }
     };
 
